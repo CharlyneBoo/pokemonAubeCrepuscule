@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+mysql-connector-python==9.6.0
+pydantic
+python-dotenv

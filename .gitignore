@@ -1,0 +1,15 @@
+# --- Front ---
+node_modules/
+dist/
+.angular/
+
+# --- Backend ---
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# --- Système & IDE ---
+.DS_Store
+.vscode/
+.idea/

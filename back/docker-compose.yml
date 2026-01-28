@@ -106,5 +106,15 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: on-failure
 
+  battle_engine:
+    build: ./battle_engine
+    container_name: battle_engine
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      PYTHONUNBUFFERED: "1"
+    restart: on-failure
 volumes:
   db_data:

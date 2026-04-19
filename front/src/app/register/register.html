@@ -1,0 +1,49 @@
+<div class="screen">
+    <div class="scanlines"></div>
+    <div class="card">
+        <h1 class="title">INSCRIPTION</h1>
+
+        <div class="field">
+            <label class="field__label" for="pseudo">Pseudo</label>
+            <input class="field__input" id="pseudo" type="text" [(ngModel)]="pseudo" name="pseudo" placeholder="Sacha"
+                required />
+        </div>
+
+        <div class="field">
+            <label class="field__label" for="email">Email</label>
+            <input class="field__input" id="email" type="email" [(ngModel)]="email" name="email"
+                placeholder="dresseur@pokemon.com" required />
+        </div>
+
+        <div class="field">
+            <label class="field__label" for="password">Mot de passe</label>
+            <input class="field__input" id="password" type="password" [(ngModel)]="password" name="password"
+                placeholder="••••••••" required />
+        </div>
+
+        <div class="field">
+            <label class="field__label">Équipe</label>
+            <div class="teams">
+                <button type="button" class="team-btn team-btn--red" [class.team-btn--selected]="team_color === 'red'"
+                    (click)="team_color = 'red'">
+                    🔴 Rouge
+                </button>
+                <button type="button" class="team-btn team-btn--blue" [class.team-btn--selected]="team_color === 'blue'"
+                    (click)="team_color = 'blue'">
+                    🔵 Bleue
+                </button>
+            </div>
+        </div>
+
+        <div class="error" *ngIf="error">
+            <span class="error__icon">!</span> {{ error }}
+        </div>
+
+        <div class="btn-row">
+            <a class="btn btn--secondary" routerLink="/login">Connexion</a>
+            <button class="btn btn--primary" type="button" (click)="onSubmit()" [disabled]="loading">
+                {{ loading ? '...' : "S'inscrire" }}
+            </button>
+        </div>
+    </div>
+</div>

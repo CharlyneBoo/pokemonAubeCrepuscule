@@ -1,0 +1,31 @@
+<div class="wrapper">
+    <img class="deco-img" src="/titre.png" alt="" />
+    <div class="screen">
+        <div class="card">
+            <h1 class="title">CONNEXION</h1>
+
+            <div class="field">
+                <label class="field__label" for="email">Email</label>
+                <input class="field__input" id="email" type="email" [(ngModel)]="email" name="email"
+                    placeholder="dresseur@pokemon.com" required />
+            </div>
+
+            <div class="field">
+                <label class="field__label" for="password">Mot de passe</label>
+                <input class="field__input" id="password" type="password" [(ngModel)]="password" name="password"
+                    placeholder="••••••••" required />
+            </div>
+
+            <div class="error" *ngIf="error">
+                <span class="error__icon">!</span> {{ error }}
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn--primary" type="button" (click)="onSubmit()" [disabled]="loading">
+                    {{ loading ? '...' : 'Connexion' }}
+                </button>
+                <a class="btn btn--secondary" routerLink="/register">S'inscrire</a>
+            </div>
+        </div>
+    </div>
+</div>

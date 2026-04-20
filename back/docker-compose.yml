@@ -106,6 +106,19 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: on-failure
 
+  pokemon-service:
+    build:
+      context: ./pokemon_service # Ajuste ce chemin si ton docker-compose est ailleurs
+      dockerfile: Dockerfile
+    container_name: pokemon-service
+    ports:
+      - "8002:8000"
+    # Le volume permet le "hot-reload" : tes modifications de code se répercutent sans rebuild
+    volumes:
+      - ./pokemon_service/app:/code/app
+    environment:
+      - PYTHONUNBUFFERED=1 # Permet de voir les logs Python en temps réel dans la console
+      
   battle_engine:
     build: ./battle_engine
     container_name: battle_engine

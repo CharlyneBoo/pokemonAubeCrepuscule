@@ -1,33 +1,27 @@
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
-import hashlib
-import hmac
 import os
-import base64
 
-SECRET_KEY = "SUPER_SECRET_KEY"
+SECRET_KEY = os.getenv("SECRET_KEY", "changeme_secret")
 ALGORITHM = "HS256"
 EXPIRE_MINUTES = 60
 
-SECRET_KEY = b"SUPER_SECRET_KEY"  # utilisé pour le HMAC
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
-    # tronquer pour rester compatible si tu veux
-    password = password[:72]
-    # générer un hash HMAC-SHA256
-    hashed = hmac.new(SECRET_KEY, password.encode("utf-8"), hashlib.sha256).digest()
-    # retourner en base64 pour stocker facilement
-    return base64.b64encode(hashed).decode("utf-8")
+    return pwd_context.hash(password[:72])
 
 def verify_password(password: str, hashed: str) -> bool:
-    password = password[:72]
-    return hmac.compare_digest(hash_password(password), hashed)
+    return pwd_context.verify(password[:72], hashed)
 
-def create_token(user_id: str):
+def create_token(user_id: str) -> str:
     payload = {
         "sub": user_id,
         "exp": datetime.utcnow() + timedelta(minutes=EXPIRE_MINUTES)
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
+def decode_token(token: str) -> str:
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    return payload.get("sub")

@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+:host {
+    display: block;
+    min-height: 100vh;
+    background: url('/Desktop.png') center center / cover no-repeat;
+    --gold: #f5c518;
+    --red: #e63946;
+    --blue: #4895ef;
+    --bg: #0d0d1a;
+    --card-bg: #6a3fa0;
+    --input-bg: #d4b8f0;
+    --btn-primary: #9b6dd1;
+    --btn-secondary: #c4a0e8;
+    --text: #1a0a2e;
+    display: block;
+    min-height: 100vh;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Press Start 2P', monospace;
+    padding: 2rem 1rem;
+}
+
+.card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.4s ease both;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.title {
+    font-size: 0.9rem;
+    color: var(--text);
+    letter-spacing: 0.05em;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field__label {
+    font-size: 0.6rem;
+    color: var(--text);
+    letter-spacing: 0.05em;
+}
+
+.field__input {
+    background: var(--input-bg);
+    border: none;
+    border-radius: 14px;
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    font-size: 1.3rem;
+    padding: 0.9rem 1.2rem;
+    outline: none;
+    transition: box-shadow 0.2s;
+    width: 100%;
+}
+
+.field__input::placeholder {
+    color: rgba(60, 20, 100, 0.4);
+}
+
+.field__input:focus {
+    box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.5);
+}
+
+.teams {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+}
+
+.team-btn {
+    padding: 0.8rem 0.5rem;
+    border: 3px solid transparent;
+    border-radius: 14px;
+    background: var(--input-bg);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.team-btn--red.team-btn--selected {
+    border-color: var(--red);
+    background: rgba(230, 57, 70, 0.25);
+    box-shadow: 0 0 12px rgba(230, 57, 70, 0.4);
+}
+
+.team-btn--blue.team-btn--selected {
+    border-color: var(--blue);
+    background: rgba(72, 149, 239, 0.25);
+    box-shadow: 0 0 12px rgba(72, 149, 239, 0.4);
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(230, 57, 70, 0.2);
+    border-radius: 10px;
+    color: #ffcccc;
+    font-family: 'VT323', monospace;
+    font-size: 1rem;
+    padding: 0.6rem 0.8rem;
+}
+
+.error__icon {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    background: var(--red);
+    color: white;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-row {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 0.4rem;
+}
+
+.btn {
+    flex: 1;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.05em;
+    padding: 1rem 0.5rem;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.15s;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:active {
+    transform: translateY(2px);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn--primary {
+    background: var(--btn-primary);
+    color: white;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25);
+}
+
+.btn--primary:hover:not(:disabled) {
+    filter: brightness(1.15);
+}
+
+.btn--secondary {
+    background: var(--btn-secondary);
+    color: var(--text);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+}
+
+.btn--secondary:hover {
+    filter: brightness(1.1);
+}

@@ -3,8 +3,9 @@ uvicorn[standard]
 SQLAlchemy
 mysql-connector-python==9.6.0
 pydantic
-passlib[bcrypt]
+pydantic[email]
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 python-jose
 python-dotenv
-pydantic[email]
 aiokafka

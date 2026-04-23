@@ -115,6 +115,30 @@ services:
       - "8010:8000"
     restart: on-failure
 
+  pokemon-service:
+    build:
+      context: ./pokemon_service 
+      dockerfile: Dockerfile
+    container_name: pokemon-service
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./pokemon_service/app:/code/app
+    environment:
+      - PYTHONUNBUFFERED=1 # Permet de voir les logs Python en temps réel dans la console
+  
+  pokemon-team-service:
+    build:
+      context: ./pokemon_teams_service 
+      dockerfile: Dockerfile
+    container_name: pokemon-team-service
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./pokemon_teams_service/app:/code/app
+    environment:
+      - PYTHONUNBUFFERED=1 # Permet de voir les logs Python en temps réel dans la console
+      
   battle_engine:
     build: ./battle_engine
     container_name: battle_engine

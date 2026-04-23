@@ -106,6 +106,15 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: on-failure
 
+  duel_service:
+    build: 
+      context: ./duel_service 
+      dockerfile: Dockerfile
+    container_name: duel_service
+    ports:
+      - "8010:8000"
+    restart: on-failure
+
   battle_engine:
     build: ./battle_engine
     container_name: battle_engine

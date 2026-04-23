@@ -1,0 +1,50 @@
+.duel-page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Application des fonds PNG selon la team */
+.duel-page.red {
+  background-image: url('/assets/images/bg_red_team.png');
+}
+.duel-page.blue {
+  background-image: url('/assets/images/bg_blue_team.png');
+}
+
+.main-battle-area {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+  padding: 20px;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.icon {
+  width: 60px;
+  height: 60px;
+  border: 2px solid white;
+  border-radius: 5px;
+}
+.ko-grayscale {
+  filter: grayscale(100%);
+  opacity: 0.5;
+}
+
+.arena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+}
+
+.active-pokemon img {
+  height: 200px;
+}

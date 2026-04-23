@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PokemonService, PokemonInfo } from '../../services/pokemon.service';
+import { PokemonTeamService, PokemonTeam } from '../../services/pokemon_team.service';
 
 @Component({
   selector: 'app-dex',
@@ -23,7 +24,11 @@ export class DexComponent implements OnInit {
   offset: number = 0;
   limit: number = 100;
 
-  constructor(private pokemonService: PokemonService) { }
+  showModalAjout: boolean = false;
+  teamsDisponibles: PokemonTeam[] = [];
+  pokemonSelectionneId: number | null = null;
+
+  constructor(private pokemonService: PokemonService,private teamService: PokemonTeamService) { }
 
   /**
    * Fonction de lancement
@@ -31,7 +36,22 @@ export class DexComponent implements OnInit {
   ngOnInit() {
     this.lancerRecherche(true);
   }
-  
+  ouvrirModalAjout(pokemonId: number) {
+    this.pokemonSelectionneId = pokemonId;
+    
+    // On demande au backend la liste fraîche des équipes
+    this.teamService.getPokemonTeams().subscribe({
+      next: (teams) => {
+        // L'astuce pro : On filtre DIRECTEMENT pour ne garder que les équipes non pleines !
+        this.teamsDisponibles = teams.filter(t => t.pokemons.length < 6);
+        this.showModalAjout = true; // On affiche la popup
+      }
+    });
+  }
+  fermerModal() {
+    this.showModalAjout = false;
+    this.pokemonSelectionneId = null;
+  }
   // Fonction principale qui appelle l'API via le service
   // Le paramètre 'reset' permet de savoir si c'est une nouvelle recherche ou juste la page suivante
   lancerRecherche(reset: boolean = false) {
@@ -43,11 +63,8 @@ export class DexComponent implements OnInit {
     this.pokemonService.searchPokemons(this.searchNom, this.searchId, this.searchType1, this.searchType2, this.offset, this.limit)
       .subscribe({
         next: (data: PokemonInfo[]) => {
-          // On rajoute dynamiquement la propriété isFlipped pour gérer l'animation CSS au clic
           const nouveaux = data.map((p: PokemonInfo) => ({ ...p, isFlipped: false }));
-          // On fusionne les anciens résultats avec les nouveaux (utile pour le "charger plus")
           this.pokemons = [...this.pokemons, ...nouveaux];
-          // On force le tri par ID au cas où les requêtes asynchrones arrivent dans le désordre
           this.pokemons.sort((a, b) => a.id - b.id);
         },
         error: (err: any) => console.error('Erreur', err)
@@ -67,14 +84,25 @@ export class DexComponent implements OnInit {
     pokemon.isFlipped = !pokemon.isFlipped;
   }
 
-  /**
-   * TODO
-   * @param pokemon 
-   * @param event 
-   */
-  addToTeam(pokemon: PokemonInfo, event: Event) {
-    event.stopPropagation();
-    console.log(`Le Pokémon ${pokemon.nom} va être ajouté à l'équipe !`);
-    alert(`${pokemon.nom} sélectionné !`);
+  ajouterAEquipe(team: PokemonTeam) {
+    if (this.pokemonSelectionneId === null) return;
+
+    if (team.pokemons.includes(this.pokemonSelectionneId)) {
+      alert(`${team.nom} possède déjà ce Pokémon !`);
+      return;
+    }
+
+    // On ajoute le pokémon et on envoie la mise à jour au backend
+    team.pokemons.push(this.pokemonSelectionneId);
+    this.teamService.updatePokemonTeam(team.id, team.pokemons).subscribe({
+      next: () => {
+        alert(`Pokémon ajouté avec succès à ${team.nom} !`);
+        this.fermerModal(); 
+      },
+      error: (err) => {
+        console.error(err);
+        alert("Erreur lors de l'ajout.");
+      }
+    });
   }
 }

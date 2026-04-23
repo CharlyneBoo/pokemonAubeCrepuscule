@@ -1,7 +1,9 @@
 import { Routes } from '@angular/router';
-import { DexComponent } from './pages/dex/dex.component'; // Importe ton composant
+import { DexComponent } from './pages/dex/dex.component'; 
+import { PokemonTeamsComponent } from './pages/pokemon_team/pokemon_teams.component';
 
 export const routes: Routes = [
   { path: 'dex', component: DexComponent },
-  // Tu pourras ajouter tes autres pages ici plus tard (accueil, équipe, etc.)
+  { path: 'pokemonteams', component: PokemonTeamsComponent },
+
 ];

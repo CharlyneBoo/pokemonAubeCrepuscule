@@ -108,14 +108,25 @@ services:
 
   pokemon-service:
     build:
-      context: ./pokemon_service # Ajuste ce chemin si ton docker-compose est ailleurs
+      context: ./pokemon_service 
       dockerfile: Dockerfile
     container_name: pokemon-service
     ports:
       - "8002:8000"
-    # Le volume permet le "hot-reload" : tes modifications de code se répercutent sans rebuild
     volumes:
       - ./pokemon_service/app:/code/app
+    environment:
+      - PYTHONUNBUFFERED=1 # Permet de voir les logs Python en temps réel dans la console
+  
+  pokemon-team-service:
+    build:
+      context: ./pokemon_teams_service 
+      dockerfile: Dockerfile
+    container_name: pokemon-team-service
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./pokemon_teams_service/app:/code/app
     environment:
       - PYTHONUNBUFFERED=1 # Permet de voir les logs Python en temps réel dans la console
       

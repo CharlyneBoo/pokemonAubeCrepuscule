@@ -1,8 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router'; 
 import { PokemonService, PokemonInfo } from '../../services/pokemon.service';
 import { PokemonTeamService, PokemonTeam } from '../../services/pokemon_team.service';
+import { Auth } from '../../services/auth';
 
 @Component({
   selector: 'app-dex',
@@ -11,77 +13,104 @@ import { PokemonTeamService, PokemonTeam } from '../../services/pokemon_team.ser
   templateUrl: './dex.component.html'
 })
 export class DexComponent implements OnInit {
-  // Stocke tous les pokémons actuellement affichés à l'écran
-  pokemons: PokemonInfo[] = [];
+  user = {
+    id: '',
+    pseudo: 'Chargement...',
+    team_color: 'bleu'
+  };
 
-  // Variables liées aux inputs de la barre de recherche
+  pokemons: PokemonInfo[] = [];
+  
+  // Filtres de recherche
   searchNom: string = '';
   searchId: string = ''; 
   searchType1: string = '';
   searchType2: string = '';
 
-  // Gestion de la pagination (on en charge 50 par 50 pour pas faire crasher le navigateur)
+  // Pagination
   offset: number = 0;
   limit: number = 100;
 
-  showModalAjout: boolean = false;
+  // Modale
+  showAjout: boolean = false;
   teamsDisponibles: PokemonTeam[] = [];
   pokemonSelectionneId: number | null = null;
 
-  constructor(private pokemonService: PokemonService,private teamService: PokemonTeamService) { }
+  constructor(private pokemonService: PokemonService,private teamService: PokemonTeamService,private auth: Auth,private router: Router,@Inject(PLATFORM_ID) private platformId: Object){}
 
-  /**
-   * Fonction de lancement
-   */
-  ngOnInit() {
+  async ngOnInit() {
+    await this.chargerProfil();
     this.lancerRecherche(true);
   }
-  ouvrirModalAjout(pokemonId: number) {
-    this.pokemonSelectionneId = pokemonId;
-    
-    // On demande au backend la liste fraîche des équipes
-    this.teamService.getPokemonTeams().subscribe({
-      next: (teams) => {
-        // L'astuce pro : On filtre DIRECTEMENT pour ne garder que les équipes non pleines !
-        this.teamsDisponibles = teams.filter(t => t.pokemons.length < 6);
-        this.showModalAjout = true; // On affiche la popup
+
+  async chargerProfil() {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const data = await this.auth.getMe();
+        this.user.id = data.id;
+        this.user.pseudo = data.pseudo;
+        this.user.team_color = data.team_color;
+      } catch (err) {
+        console.error("Erreur profil Dex :", err);
       }
-    });
+    }
   }
-  fermerModal() {
-    this.showModalAjout = false;
-    this.pokemonSelectionneId = null;
-  }
-  // Fonction principale qui appelle l'API via le service
-  // Le paramètre 'reset' permet de savoir si c'est une nouvelle recherche ou juste la page suivante
+
   lancerRecherche(reset: boolean = false) {
     if (reset) {
       this.offset = 0;
-      this.pokemons = [];// On vide tout avant de chercher
+      this.pokemons = [];
     }
-
     this.pokemonService.searchPokemons(this.searchNom, this.searchId, this.searchType1, this.searchType2, this.offset, this.limit)
-      .subscribe({
-        next: (data: PokemonInfo[]) => {
-          const nouveaux = data.map((p: PokemonInfo) => ({ ...p, isFlipped: false }));
-          this.pokemons = [...this.pokemons, ...nouveaux];
-          this.pokemons.sort((a, b) => a.id - b.id);
-        },
-        error: (err: any) => console.error('Erreur', err)
+  .subscribe({
+    next: (donneesRecues: PokemonInfo[]) => {
+      
+      let searchResult: PokemonInfo[] = [];
+      for (let i = 0; i < donneesRecues.length; i++) {
+        let pokemonActuel = donneesRecues[i];
+        pokemonActuel.isFlipped = false; 
+        searchResult.push(pokemonActuel);
+      }
+      for (let j = 0; j < searchResult.length; j++) {
+        this.pokemons.push(searchResult[j]);
+      }
+
+      this.pokemons.sort(function(pokemon1, pokemon2) {
+        if (pokemon1.id < pokemon2.id) {
+          return -1;
+        } else if (pokemon1.id > pokemon2.id) {
+          return 1;
+        } else {
+          return 0; 
+        }
       });
+
+    },
+    error: (erreurServeur: any) => {
+      console.error("Il y a eu une erreur avec l'API Pokemon :", erreurServeur);
+    }
+  });
   }
 
-  /**
-   * Function pour charger plus
-   */
-  chargerPlus() {
-    this.offset += this.limit;
-    this.lancerRecherche();
+  ouvrirAjout(pokemonId: number) {
+    if (!this.user.id) {
+      alert("Tu dois être connecté pour ajouter un Pokémon !");
+      return;
+    }
+    this.pokemonSelectionneId = pokemonId;
+    this.teamService.getPokemonTeams(this.user.id).subscribe({
+      next: (teams) => {
+        // On ne montre que les équipes qui ont de la place
+        this.teamsDisponibles = teams.filter(t => t.pokemons.length < 6);
+        this.showAjout = true; 
+      },
+      error: (err) => console.error("Erreur récup équipes", err)
+    });
   }
 
-// Alterne l'affichage recto/verso de la carte sélectionnée
-  toggleFlip(pokemon: PokemonInfo) {
-    pokemon.isFlipped = !pokemon.isFlipped;
+  fermerModal() {
+    this.showAjout = false;
+    this.pokemonSelectionneId = null;
   }
 
   ajouterAEquipe(team: PokemonTeam) {
@@ -92,17 +121,26 @@ export class DexComponent implements OnInit {
       return;
     }
 
-    // On ajoute le pokémon et on envoie la mise à jour au backend
     team.pokemons.push(this.pokemonSelectionneId);
     this.teamService.updatePokemonTeam(team.id, team.pokemons).subscribe({
       next: () => {
-        alert(`Pokémon ajouté avec succès à ${team.nom} !`);
+        alert(`Ajouté à ${team.nom} !`);
         this.fermerModal(); 
       },
-      error: (err) => {
-        console.error(err);
-        alert("Erreur lors de l'ajout.");
-      }
+      error: (err) => alert("Erreur lors de l'ajout")
     });
+  }
+
+  chargerPlus() {
+    this.offset += this.limit;
+    this.lancerRecherche();
+  }
+
+  toggleFlip(pokemon: PokemonInfo) {
+    pokemon.isFlipped = !pokemon.isFlipped;
+  }
+
+  naviguer(route: string) {
+    this.router.navigate([route]);
   }
 }

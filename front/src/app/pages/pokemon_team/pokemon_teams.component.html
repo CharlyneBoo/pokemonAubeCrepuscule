@@ -1,15 +1,17 @@
-<div class="min-h-screen p-8 font-sans bg-[url('/fond.png')] bg-cover bg-center bg-fixed">
+<div class="min-h-screen p-8 font-sans bg-cover bg-center bg-fixed transition-all duration-500"
+     [style.background-image]="user.team_color === 'red' ? 'url(/redfond.png)' : 'url(/bluefond.png)'">
   <div class="max-w-4xl mx-auto flex items-center gap-6 mb-12">
     <div class="w-32 h-32 bg-white rounded-full border-4 border-white shadow-md overflow-hidden flex-shrink-0">
-      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="Avatar" class="w-full h-full object-cover">
+      <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png"
+        alt="Avatar" class="w-full h-full object-cover">
     </div>
-    <h1 class="text-4xl font-bold text-black">Pierre200326</h1>
+    <h2>{{ user.pseudo }}</h2>
   </div>
 
   <div class="max-w-4xl mx-auto flex justify-between items-end mb-6">
     <h2 class="text-3xl font-bold text-black border-b-4 border-red-600 pb-1">Mes Équipes</h2>
-    <button (click)="creerNouvelleEquipe()" 
-            class="bg-black text-white px-6 py-2.5 rounded-lg font-bold hover:bg-gray-800 transition-colors shadow-lg flex items-center gap-2">
+    <button (click)="creerNouvelleEquipe()"
+      class="bg-black text-white px-6 py-2.5 rounded-lg font-bold hover:bg-gray-800 transition-colors shadow-lg flex items-center gap-2">
       <span class="text-xl">+</span> Créer une équipe
     </button>
   </div>
@@ -17,39 +19,47 @@
   <div class="max-w-4xl mx-auto space-y-8">
 
     <div *ngFor="let team of teams" class="flex flex-col">
-      
+
       <div class="flex items-center gap-4 mb-2">
         <h2 class="text-2xl font-bold text-black">{{ team.nom }}</h2>
-        <button (click)="completerEquipe(team.id)" class="bg-[#8b1c1c] text-white text-xs font-bold px-4 py-1.5 rounded-md hover:bg-[#6b1515] transition-colors shadow">
+        <button (click)="completerEquipe(team.id)"
+          class="bg-[#8b1c1c] text-white text-xs font-bold px-4 py-1.5 rounded-md hover:bg-[#6b1515] transition-colors shadow">
           Complete
         </button>
       </div>
 
       <div class="flex gap-4 items-stretch">
-        
-        <div class="flex-grow bg-[#cc2222] rounded-xl flex items-center justify-around p-2 min-h-[120px] shadow-lg relative overflow-hidden">
-          
+
+        <div
+          class="flex-grow bg-[#cc2222] rounded-xl flex items-center justify-around p-2 min-h-[120px] shadow-lg relative overflow-hidden">
+
           <div class="absolute inset-0 opacity-10 flex justify-center items-center pointer-events-none">
             <div class="w-48 h-48 border-8 border-white rounded-full"></div>
           </div>
 
           <div *ngFor="let slot of [0, 1, 2, 3, 4, 5]" class="relative w-20 h-20 group">
-            
-            <ng-container *ngIf="team.pokemons.length > slot">
-              <img [src]="getImageUrl(team.pokemons[slot])" class="w-full h-full object-contain drop-shadow-md z-10 relative">
 
-              <div *ngIf="team.isEditing" (click)="retirerPokemon(team, slot)" class="absolute inset-0 bg-red-900/60 rounded-lg flex items-center justify-center z-20 cursor-pointer hover:bg-red-900/80 transition-colors">
+            <ng-container *ngIf="team.pokemons.length > slot">
+              <img [src]="getImageUrl(team.pokemons[slot])"
+                class="w-full h-full object-contain drop-shadow-md z-10 relative">
+
+              <div *ngIf="team.isEditing" (click)="retirerPokemon(team, slot)"
+                class="absolute inset-0 bg-red-900/60 rounded-lg flex items-center justify-center z-20 cursor-pointer hover:bg-red-900/80 transition-colors">
                 <span class="absolute -top-2 -right-1 text-black text-xs">🗑️</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
               </div>
             </ng-container>
 
             <ng-container *ngIf="team.pokemons.length <= slot">
-              <div class="w-full h-full rounded-full bg-black/20 border-2 border-dashed border-white/30 flex items-center justify-center relative z-10">
-                
-                <div *ngIf="team.isEditing" (click)="ajouterPokemon(team)" class="absolute inset-0 cursor-pointer flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+              <div
+                class="w-full h-full rounded-full bg-black/20 border-2 border-dashed border-white/30 flex items-center justify-center relative z-10">
+
+                <div *ngIf="team.isEditing" (click)="ajouterPokemon(team)"
+                  class="absolute inset-0 cursor-pointer flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
                   <span class="text-white text-3xl font-bold opacity-70">+</span>
                 </div>
 
@@ -60,12 +70,12 @@
         </div>
 
         <div class="flex flex-col gap-2 w-24">
-          <button (click)="toggleEdit(team)" 
-                  class="bg-[#8b1c1c] text-white text-sm font-bold flex-1 rounded-lg hover:bg-[#6b1515] transition-colors shadow">
+          <button (click)="toggleEdit(team)"
+            class="bg-[#8b1c1c] text-white text-sm font-bold flex-1 rounded-lg hover:bg-[#6b1515] transition-colors shadow">
             {{ team.isEditing ? 'Save' : 'Modify' }}
           </button>
-          <button (click)="supprimerEquipe(team.id)" 
-                  class="bg-[#8b1c1c] text-white text-sm font-bold flex-1 rounded-lg hover:bg-[#6b1515] transition-colors shadow">
+          <button (click)="supprimerEquipe(team.id)"
+            class="bg-[#8b1c1c] text-white text-sm font-bold flex-1 rounded-lg hover:bg-[#6b1515] transition-colors shadow">
             Delete
           </button>
         </div>

@@ -23,7 +23,7 @@ export class Login {
     this.loading = true;
     try {
       await this.auth.login(this.email, this.password);
-      this.router.navigate(['/register']);
+      this.router.navigate(['/home']);
     } catch (err: any) {
       this.error = err?.error?.detail || 'Identifiants invalides';
     } finally {

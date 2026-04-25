@@ -1,5 +1,5 @@
-<div class="min-h-screen p-8 font-sans bg-cover bg-fixed bg-center" style="background-image: url('/fond.png');">
-
+<div class="min-h-screen p-8 font-sans bg-cover bg-center bg-fixed transition-all duration-500"
+    [style.background-image]="user.team_color === 'red' ? 'url(/redfond.png)' : 'url(/bluefond.png)'">
   <div class="flex justify-center mb-16 mt-4 relative z-50">
     <div class="bg-black text-white rounded-2xl flex items-center gap-8 px-4 py-3 shadow-2xl">
 
@@ -86,7 +86,7 @@
           <h3 class="text-[1.35rem] font-medium text-black mt-1 capitalize">{{ pokemon.nom }} N: {{ pokemon.id |
             number:'3.0-0' }}</h3>
 
-          <button (click)="ouvrirModalAjout(pokemon.id); $event.stopPropagation()"
+          <button (click)="ouvrirAjout(pokemon.id); $event.stopPropagation()"
             class="mt-4 bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow hover:bg-red-700 transition-colors flex items-center gap-2">
             <span>+</span> Ajouter à une équipe
           </button>
@@ -176,7 +176,7 @@
 
           <div class="flex justify-center z-10 active:scale-95 transition-transform">
             <button class="bg-[#e53935] text-white px-6 py-2 rounded-lg font-bold text-sm shadow-md"
-              (click)="ouvrirModalAjout(pokemon.id); $event.stopPropagation()">
+              (click)="ouvrirAjout(pokemon.id); $event.stopPropagation()">
               Add to Team
             </button>
           </div>

@@ -1,26 +1,99 @@
-import { Component, OnInit } from '@angular/core';
-import { PokemonTeamService, PokemonTeam } from '../../services/pokemon_team.service';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { PokemonTeamService, PokemonTeam } from '../../services/pokemon_team.service';
+import { Auth } from '../../services/auth';
 
 @Component({
   selector: 'app-pokemon-teams',
-  standalone: true, 
-  imports: [CommonModule, FormsModule], 
-templateUrl: './pokemon_teams.component.html'})
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './pokemon_teams.component.html'
+})
 export class PokemonTeamsComponent implements OnInit {
+  user = {
+    id: '',
+    pseudo: 'Chargement...',
+    team_color: 'bleu'
+  };
   teams: PokemonTeam[] = [];
 
-  constructor(private teamService: PokemonTeamService) {}
+  constructor(private teamService: PokemonTeamService,private auth: Auth,private router: Router,@Inject(PLATFORM_ID) private platformId: Object) { }
 
-  ngOnInit() {
-    this.chargerEquipes();
+  async ngOnInit() {
+    await this.chargerProfil();
+  }
+
+  async chargerProfil() {
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        const data = await this.auth.getMe();
+        this.user.id = data.id;
+        this.user.pseudo = data.pseudo;
+        this.user.team_color = data.team_color;
+        this.chargerEquipes();
+      } catch (err) {
+        console.error("Utilisateur non connecté ou erreur auth :", err);
+        this.auth.logout();
+        this.router.navigate(['/login']);
+      }
+    }
   }
 
   chargerEquipes() {
-    this.teamService.getPokemonTeams().subscribe({
+    this.teamService.getPokemonTeams(this.user.id).subscribe({
       next: (data) => this.teams = data,
-      error: (err) => console.error(err)
+      error: (err) => console.error("Erreur chargement équipes :", err)
+    });
+  }
+
+
+  creerNouvelleEquipe() {
+    const nomEquipe = prompt("Nom de l'équipe :");
+    if (nomEquipe?.trim() && this.user.id) {
+      this.teamService.createPokemonTeam(nomEquipe, this.user.id).subscribe({
+        next: () => this.chargerEquipes(),
+        error: () => alert("Erreur lors de la création")
+      });
+    }
+  }
+
+  supprimerEquipe(teamId: number) {
+    if (confirm("Supprimer cette équipe ?")) {
+      this.teamService.deletePokemonTeam(teamId).subscribe(() => this.chargerEquipes());
+    }
+  }
+
+  completerEquipe(teamId: number) {
+    this.teamService.completeTeam(teamId).subscribe(() => this.chargerEquipes());
+  }
+
+  toggleEdit(team: PokemonTeam) {
+    team.isEditing = !team.isEditing;
+  }
+
+  ajouterPokemon(team: PokemonTeam) {
+    if (!team.isEditing) return;
+    if (team.pokemons.length >= 6) return alert("Équipe complète (6 max)");
+    const idSaisi = prompt("ID du Pokémon :");
+    const pokemonId = Number(idSaisi);
+    if (idSaisi && !isNaN(pokemonId)) {
+      if (team.pokemons.includes(pokemonId)) return alert("Déjà présent");
+      team.pokemons.push(pokemonId);
+      this.sauvegarderEquipe(team);
+    }
+  }
+
+  retirerPokemon(team: PokemonTeam, index: number) {
+    if (!team.isEditing) return;
+    team.pokemons.splice(index, 1);
+    this.sauvegarderEquipe(team);
+  }
+
+  private sauvegarderEquipe(team: PokemonTeam) {
+    this.teamService.updatePokemonTeam(team.id, team.pokemons).subscribe({
+      error: () => alert("Erreur de sauvegarde")
     });
   }
 
@@ -28,75 +101,7 @@ export class PokemonTeamsComponent implements OnInit {
     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
   }
 
-  toggleEdit(team: PokemonTeam) {
-    team.isEditing = !team.isEditing;
+  naviguer(route: string) {
+    this.router.navigate([route]);
   }
-
-  supprimerEquipe(teamId: number) {
-    if(confirm("Delete team?")) {
-      this.teamService.deletePokemonTeam(teamId).subscribe(() => {
-        this.chargerEquipes(); // On recharge la liste après avoir supprimé
-      });
-    }
-  }
-
-  completerEquipe(teamId: number) {
-    this.teamService.completePokemonTeam(teamId).subscribe(() => {
-      this.chargerEquipes();
-    });
-  }
-
-  retirerPokemon(team: PokemonTeam, indexDuPokemon: number) {
-    if (!team.isEditing) return;
-
-    // On retire le pokemon du tableau
-    team.pokemons.splice(indexDuPokemon, 1);
-    
-    // On sauvegarde la nouvelle équipe dans le backend
-    this.teamService.updatePokemonTeam(team.id, team.pokemons).subscribe();
-  }
-ajouterPokemon(team: PokemonTeam) {
-    if (!team.isEditing) return;
-
-    if (team.pokemons.length >= 6) {
-      alert("Full team");
-      return;
-    }
-
-    const idSaisi = prompt("Enter pokemon id :");
-
-    if (idSaisi && !isNaN(Number(idSaisi))) {
-      const pokemonId = Number(idSaisi);
-      
-      if (team.pokemons.includes(pokemonId)) {
-        alert("Already in the team ");
-        return; 
-      }
-
-      team.pokemons.push(pokemonId);
-      
-      this.teamService.updatePokemonTeam(team.id, team.pokemons).subscribe({
-        error: (err) => {
-          console.error(err);
-          alert("Error saving");
-        }
-      });
-    }
-  }
-  creerNouvelleEquipe() {
-    const nomEquipe = prompt("Team name");
-
-    if (nomEquipe && nomEquipe.trim() !== "") {
-      this.teamService.createPokemonTeam(nomEquipe).subscribe({
-        next: () => {
-          this.chargerEquipes(); 
-        },
-        error: (err) => {
-          console.error(err);
-          alert("Error creating the team");
-        }
-      });
-    }
-  }
-  
 }

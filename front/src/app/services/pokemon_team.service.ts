@@ -2,38 +2,51 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+// L'interface sert juste de "moule" pour que TypeScript connaisse la forme d'une équipe
 export interface PokemonTeam {
   id: number;
   nom: string;
-  pokemons: number[]; // On ne stocke que les numéros !
-  isEditing?: boolean; // Variable invisible pour gérer ton effet visuel de la "PokemonTeam 2"
+  user_id: string; 
+  pokemons: number[];
+  isEditing?: boolean;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PokemonTeamService {
-  private apiUrl = 'http://localhost:8003/pokemonteams';
+  
+  private apiUrl = 'http://localhost:8003/pokemonteams'; 
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  getPokemonTeams(): Observable<PokemonTeam[]> {
-    return this.http.get<PokemonTeam[]>(this.apiUrl);
+  getPokemonTeams(userId: string): Observable<PokemonTeam[]> {
+    let url = this.apiUrl + '/user/' + userId;
+        return this.http.get<PokemonTeam[]>(url);
   }
 
-  createPokemonTeam(nom: string): Observable<PokemonTeam> {
-    return this.http.post<PokemonTeam>(`${this.apiUrl}?nom=${nom}`, {});
+  createPokemonTeam(nom: string, userId: string): Observable<PokemonTeam> {
+    let url = this.apiUrl + "?nom=" + nom + "&user_id=" + userId;
+    let empty = {}; 
+    return this.http.post<PokemonTeam>(url, empty);
   }
 
   deletePokemonTeam(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+    let url = this.apiUrl + '/' + id;
+    return this.http.delete(url);
   }
 
   updatePokemonTeam(id: number, pokemons: number[]): Observable<PokemonTeam> {
-    return this.http.put<PokemonTeam>(`${this.apiUrl}/${id}`, { pokemons });
+    let url = this.apiUrl + '/' + id;
+    let donneesAEnvoyer = { 
+      pokemons: pokemons 
+    };
+    
+    return this.http.put<PokemonTeam>(url, donneesAEnvoyer);
   }
 
-  completePokemonTeam(id: number): Observable<PokemonTeam> {
-    return this.http.post<PokemonTeam>(`${this.apiUrl}/${id}/complete`, {});
+  completeTeam(id: number): Observable<PokemonTeam> {
+    let url = this.apiUrl + '/' + id + '/complete';
+    let corpsVide = {};
+    
+    return this.http.post<PokemonTeam>(url, corpsVide);
   }
 }

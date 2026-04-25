@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, List
 from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
@@ -23,3 +23,6 @@ class UserOut(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class UpdateTeamModel(BaseModel):
+    pokemons: List[int]

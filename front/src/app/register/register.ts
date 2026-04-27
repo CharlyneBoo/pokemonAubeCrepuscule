@@ -11,6 +11,7 @@ const TEAM_COLORS = [
 
 @Component({
   selector: 'app-register',
+  standalone: true, 
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './register.html',
   styleUrl: './register.css',
@@ -19,6 +20,8 @@ export class Register {
   email = '';
   password = '';
   pseudo = '';
+  name = '';         
+  first_name = '';   
   team_color = '';
   error = '';
   loading = false;
@@ -29,16 +32,29 @@ export class Register {
 
   async onSubmit() {
     this.error = '';
+    
+    if (!this.first_name || !this.name || !this.pseudo || !this.email || !this.password) {
+      this.error = 'Remplis tous les champs !';
+      return;
+    }
+    
     if (!this.team_color) {
       this.error = 'Choisis une équipe !';
       return;
     }
+    
     this.loading = true;
     try {
-      await this.auth.register(this.email, this.password, this.pseudo, this.team_color);
+      await this.auth.register(this.email, this.password, this.name, this.first_name, this.pseudo, this.team_color);
       this.router.navigate(['/login']);
     } catch (err: any) {
-      this.error = err?.error?.detail || 'Une erreur est survenue';
+      // GESTION DU [object Object] DE FASTAPI
+      if (err?.error?.detail && Array.isArray(err.error.detail)) {
+        // Formate les erreurs de validation de FastAPI
+        this.error = "Champs invalides : " + err.error.detail.map((e: any) => e.loc[e.loc.length - 1]).join(', ');
+      } else {
+        this.error = err?.error?.detail || 'Une erreur est survenue lors de l\'inscription';
+      }
     } finally {
       this.loading = false;
     }

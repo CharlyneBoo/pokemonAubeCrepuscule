@@ -11,6 +11,8 @@ class User(Base):
     
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    name = Column(String(100), nullable=False)
+    first_name = Column(String(100), nullable=False)
     pseudo = Column(String(100), nullable=False)
     team_color = Column(String(50), nullable=False)
     avatar_url = Column(String(255), nullable=True)

@@ -6,6 +6,7 @@ const API = 'http://localhost:8000';
 
 interface Token { access_token: string; token_type: string; }
 interface UserOut { id: string; email: string; pseudo: string; team_color: string; }
+interface UserUpdate { pseudo?: string; team_color?: string; avatar_url?: string; } // Interface ajoutée pour le typage
 
 @Injectable({
   providedIn: 'root',
@@ -13,9 +14,9 @@ interface UserOut { id: string; email: string; pseudo: string; team_color: strin
 export class Auth {
   constructor(private http: HttpClient) { }
 
-  async register(email: string, password: string, pseudo: string, team_color: string): Promise<UserOut> {
+  async register(email: string, password: string, name: string, first_name: string, pseudo: string, team_color: string): Promise<UserOut> {
     return firstValueFrom(
-      this.http.post<UserOut>(`${API}/register`, { email, password, pseudo, team_color })
+      this.http.post<UserOut>(`${API}/register`, { email, password, name, first_name, pseudo, team_color })
     );
   }
 
@@ -29,6 +30,15 @@ export class Auth {
   async getMe(): Promise<UserOut> {
     return firstValueFrom(
       this.http.get<UserOut>(`${API}/me`, {
+        headers: { Authorization: `Bearer ${this.getToken()}` }
+      })
+    );
+  }
+
+  // Ajout de la méthode updateProfile en utilisant HttpClient
+  async updateProfile(userData: UserUpdate): Promise<UserOut> {
+    return firstValueFrom(
+      this.http.patch<UserOut>(`${API}/update_profile`, userData, {
         headers: { Authorization: `Bearer ${this.getToken()}` }
       })
     );

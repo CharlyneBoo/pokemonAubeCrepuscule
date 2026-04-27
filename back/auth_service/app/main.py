@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from aiokafka import AIOKafkaProducer
 from .database import Base, engine, get_db
 from .models import User
-from .schema import UserCreate, UserLogin, UserOut, Token
+from .schema import UserCreate, UserLogin, UserOut, Token, UserUpdate
 from .auth import hash_password, verify_password, create_token, decode_token
 import json
 import os
@@ -45,6 +45,8 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         email=user.email,
         hashed_password=hash_password(user.password),
+        name=user.name,
+        first_name=user.first_name,
         pseudo=user.pseudo,
         team_color=user.team_color
     )
@@ -80,3 +82,31 @@ def get_me(authorization: str = Header(...), db: Session = Depends(get_db)):
 @app.get("/users", response_model=List[UserOut])
 def get_all_users(db: Session = Depends(get_db)):
     return db.query(User).all()
+
+@app.patch("/update_profile", response_model=UserOut)
+async def update_profile(
+    data: UserUpdate, 
+    authorization: str = Header(...), 
+    db: Session = Depends(get_db)
+):
+    try:
+        token = authorization.replace("Bearer ", "")
+        user_id = decode_token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    update_data = data.dict(exclude_unset=True) # Ne prend que les champs envoyés dans le JSON
+    
+    for key, value in update_data.items():
+        setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
+
+    await publish("user.updated", {"user_id": user.id, "updates": update_data})
+
+    return user

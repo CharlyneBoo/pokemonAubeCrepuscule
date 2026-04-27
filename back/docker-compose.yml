@@ -36,16 +36,13 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     healthcheck:
       test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 >/dev/null 2>&1"]
@@ -106,15 +103,6 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: on-failure
 
-  duel_service:
-    build: 
-      context: ./duel_service 
-      dockerfile: Dockerfile
-    container_name: duel_service
-    ports:
-      - "8010:8000"
-    restart: on-failure
-
   pokemon-service:
     build:
       context: ./pokemon_service 
@@ -125,7 +113,7 @@ services:
     volumes:
       - ./pokemon_service/app:/code/app
     environment:
-      - PYTHONUNBUFFERED=1 # Permet de voir les logs Python en temps réel dans la console
+      - PYTHONUNBUFFERED=1
   
   pokemon-team-service:
     build:
@@ -137,17 +125,38 @@ services:
     volumes:
       - ./pokemon_teams_service/app:/code/app
     environment:
-      - PYTHONUNBUFFERED=1 # Permet de voir les logs Python en temps réel dans la console
-      
+      - PYTHONUNBUFFERED=1
+
+  # --- MIS À JOUR : DUEL SERVICE ---
+  duel-service:
+    build: 
+      context: ./duel_service 
+      dockerfile: Dockerfile
+    container_name: duel-service
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./duel_service/app:/code/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: on-failure
+
   battle_engine:
-    build: ./battle_engine
+    build: 
+      context: ./battle_engine
+      dockerfile: Dockerfile
     container_name: battle_engine
+    ports:
+      - "8005:8000" 
     depends_on:
       kafka:
         condition: service_healthy
+    volumes:
+      - ./battle_engine/app:/code/app
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       PYTHONUNBUFFERED: "1"
     restart: on-failure
+
 volumes:
   db_data:

@@ -15,30 +15,72 @@
     <div
       class="bg-[#df6b63] p-6 rounded-[2.5rem] shadow-2xl relative w-full aspect-[4/3] flex flex-col justify-between border-b-8 border-r-8 border-[#c24b43]"
     >
-      <div class="bg-white rounded-xl p-8 flex-grow shadow-inner flex flex-col justify-between">
-        <h3 class="font-bold text-center text-xl text-black">Draft / Random / Construit</h3>
+      <div class="bg-white rounded-xl p-6 flex-grow shadow-inner flex flex-col justify-between">
+        <div class="flex flex-col gap-2">
+          <h3 class="font-bold text-center text-gray-400 text-sm uppercase tracking-widest mb-1">
+            Mode de jeu
+          </h3>
+          <div class="flex justify-center gap-2">
+            <button
+              (click)="choisir_mode('hasard')"
+              [ngClass]="
+                selected_game_mode === 'hasard'
+                  ? 'bg-[#311b5e] text-white shadow-inner'
+                  : 'bg-gray-200 text-black shadow-md hover:bg-gray-300'
+              "
+              class="px-3 py-1 font-bold rounded transition-all text-sm"
+            >
+              Hasard
+            </button>
+            <button
+              (click)="choisir_mode('construit')"
+              [ngClass]="
+                selected_game_mode === 'construit'
+                  ? 'bg-[#311b5e] text-white shadow-inner'
+                  : 'bg-gray-200 text-black shadow-md hover:bg-gray-300'
+              "
+              class="px-3 py-1 font-bold rounded transition-all text-sm"
+            >
+              Construit
+            </button>
+            <button
+              (click)="choisir_mode('pioche')"
+              [ngClass]="
+                selected_game_mode === 'pioche'
+                  ? 'bg-[#311b5e] text-white shadow-inner'
+                  : 'bg-gray-200 text-black shadow-md hover:bg-gray-300'
+              "
+              class="px-3 py-1 font-bold rounded transition-all text-sm"
+            >
+              Draft
+            </button>
+          </div>
+        </div>
 
         <div class="flex justify-between items-center mt-6">
           <button
-            class="bg-gray-200 px-6 py-2 font-bold text-black shadow-md hover:bg-gray-300 transition-colors"
+            class="bg-gray-200 px-4 py-2 font-bold text-black shadow-md hover:bg-gray-300 transition-colors text-sm rounded"
           >
             Choose a team
           </button>
-          <button class="font-bold text-xl text-black hover:text-red-600 transition-colors">
-            Start game
+          <button
+            (click)="lancer_partie()"
+            class="font-black text-2xl text-[#c24b43] hover:text-red-700 transition-colors animate-pulse"
+          >
+            START GAME
           </button>
         </div>
 
-        <div class="flex justify-between items-center mt-auto px-4">
+        <div class="flex justify-between items-center mt-auto pt-4 border-t-2 border-gray-100">
           <button
             (click)="naviguer('/pokemonteams')"
-            class="font-bold text-xl text-black hover:text-red-600 transition-colors"
+            class="font-bold text-gray-500 hover:text-black transition-colors"
           >
-            Mes équipes
+            Mes Ã©quipes
           </button>
           <button
             (click)="naviguer('/dex')"
-            class="font-bold text-xl text-black hover:text-red-600 transition-colors"
+            class="font-bold text-gray-500 hover:text-black transition-colors"
           >
             Pokedex
           </button>

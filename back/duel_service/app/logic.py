@@ -1,23 +1,22 @@
-# Matrice basée sur la page 16 du PDF [cite: 271]
 TYPE_MAP = {
-    "Normal": {"Roche": 0.5, "Spectre": 0, "Acier": 0.5},
-    "Feu": {"Feu": 0.5, "Eau": 0.5, "Plante": 2, "Glace": 2, "Insecte": 2, "Roche": 0.5, "Dragon": 0.5, "Acier": 2},
-    "Eau": {"Feu": 2, "Eau": 0.5, "Plante": 0.5, "Sol": 2, "Roche": 2, "Dragon": 0.5},
-    "Plante": {"Feu": 0.5, "Eau": 2, "Plante": 0.5, "Poison": 0.5, "Sol": 2, "Vol": 0.5, "Insecte": 0.5, "Roche": 2, "Dragon": 0.5, "Acier": 0.5},
-    "Électrik": {"Eau": 2, "Plante": 0.5, "Électrik": 0.5, "Sol": 0, "Vol": 2, "Dragon": 0.5},
-    "Glace": {"Feu": 0.5, "Eau": 0.5, "Plante": 2, "Glace": 0.5, "Sol": 2, "Vol": 2, "Dragon": 2, "Acier": 0.5},
-    "Combat": {"Normal": 2, "Glace": 2, "Poison": 0.5, "Vol": 0.5, "Psy": 0.5, "Insecte": 0.5, "Roche": 2, "Spectre": 0, "Ténèbres": 2, "Acier": 2, "Fée": 0.5},
-    "Poison": {"Plante": 2, "Poison": 0.5, "Sol": 0.5, "Roche": 0.5, "Spectre": 0.5, "Acier": 0, "Fée": 2},
-    "Sol": {"Feu": 2, "Plante": 0.5, "Électrik": 2, "Poison": 2, "Vol": 0, "Insecte": 0.5, "Roche": 2, "Acier": 2},
-    "Vol": {"Plante": 2, "Électrik": 0.5, "Combat": 2, "Insecte": 2, "Roche": 0.5, "Acier": 0.5},
-    "Psy": {"Combat": 2, "Poison": 2, "Psy": 0.5, "Ténèbres": 0, "Acier": 0.5},
-    "Insecte": {"Feu": 0.5, "Plante": 2, "Combat": 0.5, "Poison": 0.5, "Vol": 0.5, "Psy": 2, "Spectre": 0.5, "Ténèbres": 2, "Acier": 0.5, "Fée": 0.5},
-    "Roche": {"Feu": 2, "Glace": 2, "Combat": 0.5, "Sol": 0.5, "Vol": 2, "Insecte": 2, "Acier": 0.5},
-    "Spectre": {"Normal": 0, "Psy": 2, "Spectre": 2, "Ténèbres": 0.5,"Acier": 0.5},
-    "Dragon": {"Dragon": 2, "Acier": 0.5, "Fée": 0},
-    "Ténèbres": {"Combat": 0.5, "Psy": 2, "Spectre": 2, "Ténèbres": 0.5, "Acier": 0.5, "Fée": 0.5},
-    "Acier": {"Feu": 0.5, "Eau": 0.5, "Glace": 2, "Roche": 2, "Acier": 0.5, "Fée": 2},
-    "Fée" : {"Feu": 0.5, "Combat": 2, "Poison": 0.5, "Dragon": 2, "Ténèbres": 2, "Acier": 0.5}
+    "normal": {"rock": 0.5, "ghost": 0, "steel": 0.5},
+    "fire": {"fire": 0.5, "water": 0.5, "grass": 2, "ice": 2, "bug": 2, "rock": 0.5, "dragon": 0.5, "steel": 2},
+    "water": {"fire": 2, "water": 0.5, "grass": 0.5, "ground": 2, "rock": 2, "dragon": 0.5},
+    "grass": {"fire": 0.5, "water": 2, "grass": 0.5, "poison": 0.5, "ground": 2, "flying": 0.5, "bug": 0.5, "rock": 2, "dragon": 0.5, "steel": 0.5},
+    "electric": {"water": 2, "grass": 0.5, "electric": 0.5, "ground": 0, "flying": 2, "dragon": 0.5},
+    "ice": {"fire": 0.5, "water": 0.5, "grass": 2, "ice": 0.5, "ground": 2, "flying": 2, "dragon": 2, "steel": 0.5},
+    "fighting": {"normal": 2, "ice": 2, "poison": 0.5, "flying": 0.5, "psychic": 0.5, "bug": 0.5, "rock": 2, "ghost": 0, "dark": 2, "steel": 2, "fairy": 0.5},
+    "poison": {"grass": 2, "poison": 0.5, "ground": 0.5, "rock": 0.5, "ghost": 0.5, "steel": 0, "fairy": 2},
+    "ground": {"fire": 2, "grass": 0.5, "electric": 2, "poison": 2, "flying": 0, "bug": 0.5, "rock": 2, "steel": 2},
+    "flying": {"grass": 2, "electric": 0.5, "fighting": 2, "bug": 2, "rock": 0.5, "steel": 0.5},
+    "psychic": {"fighting": 2, "poison": 2, "psychic": 0.5, "dark": 0, "steel": 0.5},
+    "bug": {"fire": 0.5, "grass": 2, "fighting": 0.5, "poison": 0.5, "flying": 0.5, "psychic": 2, "ghost": 0.5, "dark": 2, "steel": 0.5, "fairy": 0.5},
+    "rock": {"fire": 2, "ice": 2, "fighting": 0.5, "ground": 0.5, "flying": 2, "bug": 2, "steel": 0.5},
+    "ghost": {"normal": 0, "psychic": 2, "ghost": 2, "dark": 0.5, "steel": 0.5},
+    "dragon": {"dragon": 2, "steel": 0.5, "fairy": 0},
+    "dark": {"fighting": 0.5, "psychic": 2, "ghost": 2, "dark": 0.5, "steel": 0.5, "fairy": 0.5},
+    "steel": {"fire": 0.5, "water": 0.5, "ice": 2, "rock": 2, "steel": 0.5, "fairy": 2},
+    "fairy": {"fire": 0.5, "fighting": 2, "poison": 0.5, "dragon": 2, "dark": 2, "steel": 0.5}
 }
 
 def get_mult(atk, dfs):

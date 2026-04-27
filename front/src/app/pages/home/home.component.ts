@@ -20,6 +20,8 @@ export class HomeComponent implements OnInit {
     avatar: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png'
   };
 
+  selected_game_mode: string = "hasard";
+
   constructor(
     private router: Router, 
     private auth: Auth,
@@ -66,6 +68,16 @@ export class HomeComponent implements OnInit {
 
   changeColor() {
     this.user.team_color = this.user.team_color === 'red' ? 'blue' : 'red';
+  }
+
+  choisir_mode(mode: string) {
+    this.selected_game_mode = mode;
+  }
+
+  lancer_partie() {
+    this.router.navigate(['/duel'], { 
+      queryParams: { mode: this.selected_game_mode } 
+    });
   }
 
   naviguer(route: string) {

@@ -1,10 +1,9 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from .logic import calculate_advantages
-
+import random
 app = FastAPI(title="Duel Logic Service")
 
-# Modèle de données pour la requête
 class BattleRequest(BaseModel):
     red_pokemon: dict
     blue_pokemon: dict
@@ -39,3 +38,14 @@ duel_logic = DuelService()
 async def resolve(request: BattleRequest):
     # Endpoint pour Battle Engine avec HTTP
     return duel_logic.resolve_turn(request.red_pokemon, request.blue_pokemon)
+
+@app.get("/generate-random-teams")
+def generate_random_teams():
+    ids_tires = random.sample(range(1, 1000), 12)
+    
+    return {
+        "red_team_ids": ids_tires[0:6],
+        "blue_team_ids": ids_tires[6:12],
+        "red_active_index": random.randint(0, 5),
+        "blue_active_index": random.randint(0, 5)
+    }

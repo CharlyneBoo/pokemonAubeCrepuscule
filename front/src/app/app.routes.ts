@@ -6,6 +6,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { Login } from './login/login';
 import { Register } from './register/register';
 import { authGuard } from './guards/auth-guard';
+import { DuelComponent } from './pages/duel/duel.component';
 
 export const routes: Routes = [
   { path: 'login', component: Login },
@@ -13,5 +14,6 @@ export const routes: Routes = [
   { path: 'dex', component: DexComponent,canActivate: [authGuard]  },
   { path: 'pokemonteams', component: PokemonTeamsComponent, canActivate: [authGuard]  },
   { path: 'home', component: HomeComponent,canActivate: [authGuard]  },
+  { path: 'duel', component: DuelComponent,canActivate: [authGuard]  },
   { path: '**', component: Login },
 ];

@@ -8,7 +8,7 @@ import { Auth } from '../../services/auth';
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule, FormsModule], 
-  templateUrl: './home.component.html'
+  templateUrl: './home.component.html',
 })
 export class HomeComponent implements OnInit {
   isEditing = false;

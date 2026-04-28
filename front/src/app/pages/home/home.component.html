@@ -1,19 +1,23 @@
 <div
-  class="min-h-screen p-8 font-sans bg-cover bg-center bg-fixed transition-all duration-500"
+  class="min-h-screen p-4 md:p-8 font-sans bg-cover bg-center bg-fixed transition-all duration-500"
   [style.background-image]="user.team_color === 'red' ? 'url(/redfond.png)' : 'url(/bluefond.png)'"
 >
-  <div class="max-w-5xl mx-auto flex justify-end mb-8">
-    <h1
-      class="text-6xl font-bold text-[#311b5e] tracking-wider drop-shadow-md"
-      style="font-family: 'Courier New', Courier, monospace; font-weight: 900"
-    >
-      Nom Site
-    </h1>
+  <div class="max-w-7xl mx-auto flex justify-end mb-4">
+    <img
+      class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+      src="/titre.png"
+      alt="Logo"
+    />
   </div>
 
-  <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+  <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
     <div
-      class="bg-[#df6b63] p-6 rounded-[2.5rem] shadow-2xl relative w-full aspect-[4/3] flex flex-col justify-between border-b-8 border-r-8 border-[#c24b43]"
+      class="p-6 rounded-[2.5rem] shadow-2xl relative w-full aspect-[4/3] flex flex-col justify-between border-b-8 border-r-8"
+      [ngClass]="
+        user.team_color === 'red'
+          ? 'bg-[#ff7171] border-[#db5151]'
+          : 'bg-[#90a5ff] border-[#6a4cef]'
+      "
     >
       <div class="bg-white rounded-xl p-6 flex-grow shadow-inner flex flex-col justify-between">
         <div class="flex flex-col gap-2">
@@ -26,7 +30,7 @@
               [ngClass]="
                 selected_game_mode === 'hasard'
                   ? 'bg-[#311b5e] text-white shadow-inner'
-                  : 'bg-gray-200 text-black shadow-md hover:bg-gray-300'
+                  : 'bg-gray-200 text-black'
               "
               class="px-3 py-1 font-bold rounded transition-all text-sm"
             >
@@ -37,7 +41,7 @@
               [ngClass]="
                 selected_game_mode === 'construit'
                   ? 'bg-[#311b5e] text-white shadow-inner'
-                  : 'bg-gray-200 text-black shadow-md hover:bg-gray-300'
+                  : 'bg-gray-200 text-black'
               "
               class="px-3 py-1 font-bold rounded transition-all text-sm"
             >
@@ -48,7 +52,7 @@
               [ngClass]="
                 selected_game_mode === 'pioche'
                   ? 'bg-[#311b5e] text-white shadow-inner'
-                  : 'bg-gray-200 text-black shadow-md hover:bg-gray-300'
+                  : 'bg-gray-200 text-black'
               "
               class="px-3 py-1 font-bold rounded transition-all text-sm"
             >
@@ -65,35 +69,32 @@
           </button>
           <button
             (click)="lancer_partie()"
-            class="font-black text-2xl text-[#c24b43] hover:text-red-700 transition-colors animate-pulse"
+            class="font-black text-2xl transition-colors animate-pulse"
+            [ngClass]="
+              user.team_color === 'red'
+                ? 'text-[#db5151] hover:text-red-700'
+                : 'text-[#6a4cef] hover:text-blue-700'
+            "
           >
             START GAME
           </button>
         </div>
 
-        <div class="flex justify-between items-center mt-auto pt-4 border-t-2 border-gray-100">
-          <button
-            (click)="naviguer('/pokemonteams')"
-            class="font-bold text-gray-500 hover:text-black transition-colors"
-          >
-            Mes Ã©quipes
-          </button>
-          <button
-            (click)="naviguer('/dex')"
-            class="font-bold text-gray-500 hover:text-black transition-colors"
-          >
-            Pokedex
-          </button>
+        <div
+          class="flex justify-between items-center mt-auto pt-4 border-t-2 border-gray-100 font-bold text-gray-500 text-sm"
+        >
+          <button (click)="naviguer('/pokemonteams')" class="hover:text-black">Mes équipes</button>
+          <button (click)="naviguer('/dex')" class="hover:text-black">Pokedex</button>
         </div>
       </div>
 
       <div class="flex justify-start gap-6 px-8 pt-6 pb-2">
         <button
-          class="w-12 h-12 bg-gray-200 rounded-full border-2 border-gray-400 flex items-center justify-center text-gray-500 hover:bg-white shadow-md active:scale-95 transition-transform"
+          class="w-12 h-12 bg-gray-200 rounded-full border-2 border-gray-400 flex items-center justify-center shadow-md active:scale-95 transition-transform"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6"
+            class="h-6 w-6 text-gray-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -107,107 +108,91 @@
           </svg>
         </button>
         <button
-          class="w-12 h-12 bg-gray-200 rounded-full border-2 border-gray-400 flex items-center justify-center hover:bg-white shadow-md active:scale-95 transition-transform"
+          class="w-12 h-12 bg-gray-200 rounded-full border-2 border-gray-400 flex items-center justify-center shadow-md active:scale-95 transition-transform"
         >
           <div class="w-6 h-6 border-2 border-gray-400 rounded-full"></div>
         </button>
       </div>
     </div>
 
-    <div class="flex flex-col gap-8">
+    <div class="flex flex-col gap-6">
       <div
-        class="bg-[#f28a8a] border-4 border-gray-200 rounded-2xl p-4 shadow-xl font-sans relative overflow-hidden"
+        class="relative w-full aspect-[1.42/1] font-sans text-white overflow-hidden rounded-xl shadow-2xl"
       >
-        <div
-          class="absolute top-0 right-0 w-64 h-64 bg-[#fcd066] rounded-full blur-2xl opacity-60 -mr-10 -mt-10 pointer-events-none"
-        ></div>
+        <img
+          [src]="user.team_color === 'red' ? '/redtrainer.png' : '/bluetrainer.png'"
+          class="absolute inset-0 w-full h-full object-fill z-0"
+        />
 
-        <div
-          class="flex justify-between items-center text-white font-bold mb-3 border-b-2 border-white/30 pb-1 relative z-10"
-        >
-          <div class="flex items-center gap-2">
-            <span
-              class="bg-white text-[#f28a8a] rounded-full w-5 h-5 flex items-center justify-center text-xs"
-              >Pokéball</span
-            >
-            <span class="tracking-widest">TRAINER CARD</span>
-          </div>
-          <button
-            (click)="toggleEdit()"
-            class="text-xs bg-white/20 hover:bg-white/40 px-2 py-1 rounded border border-white/50 transition-all cursor-pointer"
+        <div class="relative z-20 h-full w-full">
+          <div
+            class="absolute left-[6%] top-[18%] w-[55%] h-10 flex items-center px-2 font-bold text-lg md:text-2xl uppercase tracking-tighter drop-shadow-md"
           >
-            {{ isEditing ? '✅ SAUVER' : '⚙️ MODIFIER' }}
-          </button>
-        </div>
-
-        <div class="flex gap-4 relative z-10">
-          <div class="flex-grow flex flex-col gap-2">
-            <div
-              class="bg-[#e8ecef] rounded-r-full px-4 py-1.5 font-bold text-black border-l-4 border-gray-400 w-[105%] -ml-4 shadow-sm h-9 flex items-center"
-            >
-              <span *ngIf="!isEditing">{{ user.pseudo }}</span>
-              <input
-                *ngIf="isEditing"
-                [(ngModel)]="user.pseudo"
-                class="bg-transparent border-none outline-none w-full text-blue-700 m-0 p-0"
-                placeholder="Ton pseudo..."
-              />
-            </div>
-
-            <div
-              (click)="isEditing && changeColor()"
-              [class.cursor-pointer]="isEditing"
-              [class.hover:bg-white]="isEditing"
-              class="bg-[#e8ecef] rounded-r-full px-4 py-1.5 font-bold text-black border-l-4 border-gray-400 w-[95%] -ml-4 shadow-sm flex justify-between items-center h-9 transition-colors"
-            >
-              <span>{{ user.team_color | uppercase }}</span>
-              <span *ngIf="isEditing" class="text-[10px] text-gray-500">CLIQUE POUR CHANGER</span>
-            </div>
-
-            <button
-              class="bg-[#e8ecef] rounded-r-full px-4 py-1.5 font-bold text-black border-l-4 border-gray-400 w-[100%] -ml-4 shadow-sm text-left hover:bg-white transition-colors mt-2 h-9"
-            >
-              Bouton Historique
-            </button>
-
-            <button
-              class="bg-[#e8ecef] rounded-r-full px-4 py-1.5 font-bold text-black border-l-4 border-gray-400 w-[110%] -ml-4 shadow-sm text-left hover:bg-white transition-colors h-9"
-            >
-              {{ isEditing ? 'URL Avatar à venir...' : 'Bouton changer avatar' }}
-            </button>
-
-            <div
-              class="flex justify-between items-center bg-[#e8ecef] rounded-r-full px-4 py-1.5 font-bold border-l-4 border-gray-400 w-[100%] -ml-4 shadow-sm mt-2 h-9"
-            >
-              <span class="text-[#5b7a9e]">SCORE</span>
-              <span class="text-black text-lg leading-none">{{ user.score }}</span>
-            </div>
+            <span *ngIf="!isEditing">{{ user.pseudo }}</span>
+            <input
+              *ngIf="isEditing"
+              [(ngModel)]="user.pseudo"
+              class="bg-white/20 rounded px-2 w-full outline-none border border-white/40"
+            />
           </div>
 
           <div
-            class="w-28 h-32 bg-white rounded-2xl border-[3px] border-gray-300 overflow-hidden flex-shrink-0 shadow-inner bg-gradient-to-b from-white to-gray-100 flex items-end justify-center"
+            (click)="isEditing && changeColor()"
+            class="absolute left-[3.5%] top-[31.5%] z-30 w-80 text-center text-[10px] md:text-sm font-bold bg-transparent hover:bg-white/20 text-white py-1 rounded-md transition-all"
           >
-            <img [src]="user.avatar" alt="Avatar" class="w-24 h-24 object-contain" />
+            {{ user.team_color | uppercase }}
           </div>
-        </div>
 
-        <button
-          class="w-full mt-4 bg-[#d8dfe3] rounded-md px-3 py-2.5 font-bold text-black text-center shadow hover:bg-white transition-colors relative z-10"
-        >
-          Badges ?
-        </button>
+          <button
+            (click)="naviguer('/historique')"
+            class="absolute left-[3.5%] top-[53%] z-30 w-36 text-center text-[10px] md:text-sm font-bold bg-transparent hover:bg-white/20 text-white py-1 rounded-md transition-all"
+          >
+            HISTORIQUE
+          </button>
+          <div
+            class="absolute left-[38%] top-[52%] h-10 flex items-center font-black text-2xl md:text-3xl text-white drop-shadow-lg italic"
+          >
+            {{ user.score }}
+          </div>
+
+          <button
+            class="absolute left-[3.5%] top-[72%] z-30 w-80 text-center text-[10px] md:text-sm font-bold bg-transparent hover:bg-white/20 text-white py-1 rounded-md transition-all border border-white/20 shadow-lg"
+          >
+            DECONNEXION
+          </button>
+
+          <div
+            class="absolute top-[21%] right-[4.5%] w-[32%] h-[46%] flex items-center justify-center overflow-hidden"
+          >
+            <img [src]="user.avatar" class="w-full h-full object-contain drop-shadow-2xl" />
+          </div>
+
+          <button
+            (click)="toggleEdit()"
+            class="absolute top-[72%] right-[6%] z-30 w-40 text-center text-[10px] md:text-sm font-bold bg-white/15 hover:bg-white/20 text-white py-1 rounded-md transition-all border border-white/30 shadow-lg"
+          >
+            {{ isEditing ? 'SAVE' : 'EDIT' }}
+          </button>
+        </div>
       </div>
 
       <div
-        class="bg-[#dcdcdc] rounded-lg p-4 shadow-md font-sans text-sm text-black ml-auto w-full md:w-[90%]"
+        class="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg font-sans text-sm text-gray-800 border-l-8 border-blue-500"
       >
-        <p><span class="font-bold">Pierre 200326 :</span> Je te ez</p>
-        <p><span class="font-bold">JuicyFatMarc :</span> Les fans kc vous êtes trop toxics</p>
-        <br />
-        <p><span class="font-bold">Pablob :</span> Début du tour 3</p>
-        <p><span class="font-bold">Pablob :</span> Pierre200326 a choisi de stay</p>
-        <p><span class="font-bold">Pablob :</span> JuicyFatMarc a choisi de switch</p>
-        <p><span class="font-bold">Pablob :</span> Tortank Gagne, Pierre200326 gagne le tour 3</p>
+        <div class="space-y-1 overflow-y-auto max-h-[150px]">
+          <p><span class="font-bold text-blue-600">Pierre 200326 :</span> Je te ez</p>
+          <p>
+            <span class="font-bold text-red-600">JuicyFatMarc :</span> Les fans kc vous êtes trop
+            toxics
+          </p>
+          <hr class="my-2 border-gray-200" />
+          <p class="text-[11px] text-gray-500 italic text-center">Début du tour 3</p>
+          <p><span class="font-bold">Pablob :</span> Pierre200326 a choisi de stay</p>
+          <p><span class="font-bold">Pablob :</span> JuicyFatMarc a choisi de switch</p>
+          <p class="font-bold text-green-600 italic">
+            Tortank Gagne, Pierre200326 remporte le tour !
+          </p>
+        </div>
       </div>
     </div>
   </div>

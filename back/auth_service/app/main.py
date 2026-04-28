@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 from aiokafka import AIOKafkaProducer
@@ -28,7 +29,7 @@ app = FastAPI(title="Auth Service", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # à restreindre en prod
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -110,3 +111,34 @@ async def update_profile(
     await publish("user.updated", {"user_id": user.id, "updates": update_data})
 
     return user
+
+class MatchResult(BaseModel):
+    result: str 
+
+@app.patch("/users/me/aura")
+async def update_aura(
+    data: MatchResult, 
+    authorization: str = Header(...), 
+    db: Session = Depends(get_db)
+):
+    try:
+        token = authorization.replace("Bearer ", "")
+        user_id = decode_token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    current_user = db.query(User).filter(User.id == user_id).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if data.result == "win":
+        current_user.aura += 10
+    elif data.result == "loss":
+        current_user.aura = max(0, current_user.aura - 10)
+        
+    db.commit()
+    db.refresh(current_user)
+    
+    await publish("user.aura_updated", {"user_id": current_user.id, "new_aura": current_user.aura})
+    
+    return {"message": "Aura mise à jour", "nouvelle_aura": current_user.aura}

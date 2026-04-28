@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms'; 
 import { Auth } from '../../services/auth'; 
+import { PokemonTeamService } from '../../services/pokemon_team.service';
 
 @Component({
   selector: 'app-home',
@@ -13,7 +14,8 @@ import { Auth } from '../../services/auth';
 export class HomeComponent implements OnInit {
   isEditing = false;
 
-  user = {
+  user: any = {
+    id: '', 
     pseudo: 'Chargement...',
     team_color: 'red', 
     score: 0,
@@ -21,10 +23,15 @@ export class HomeComponent implements OnInit {
   };
 
   selected_game_mode: string = "hasard";
+  equipe_selectionnee: any = null;
+  
+  show_team_modal: boolean = false;
+  mes_equipes: any[] = [];
 
   constructor(
     private router: Router, 
     private auth: Auth,
+    private teamService: PokemonTeamService, 
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -36,15 +43,39 @@ export class HomeComponent implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       try {
         const data = await this.auth.getMe(); 
+        this.user.id = data.id; 
         this.user.pseudo = data.pseudo;
         this.user.team_color = data.team_color || 'red';
-        //if (data.score !== undefined) this.user.score = data.score;
+                this.charger_mes_equipes();
+        
       } catch (err) {
         console.error("Erreur d'authentification ou non connecté :", err);
         this.auth.logout();
         this.router.navigate(['/login']); 
       }
     }
+  }
+
+  charger_mes_equipes() {
+    if (this.user.id) {
+      this.teamService.getPokemonTeams(this.user.id).subscribe({
+        next: (data) => this.mes_equipes = data || [],
+        error: (err) => console.error("Erreur chargement équipes :", err)
+      });
+    }
+  }
+
+  ouvrir_choix_equipe() {
+    this.show_team_modal = true;
+  }
+
+  choisir_equipe(equipe: any) {
+    if (!equipe.pokemons || equipe.pokemons.length !== 6) {
+      alert("Cette équipe n'est pas complète (6 Pokémon requis) !");
+      return;
+    }
+    this.equipe_selectionnee = equipe;
+    this.show_team_modal = false;
   }
 
   async toggleEdit() {
@@ -75,9 +106,14 @@ export class HomeComponent implements OnInit {
   }
 
   lancer_partie() {
-    this.router.navigate(['/duel'], { 
-      queryParams: { mode: this.selected_game_mode } 
-    });
+    if (this.selected_game_mode === 'construit') {
+      if (!this.equipe_selectionnee) return;
+      
+      const ids = this.equipe_selectionnee.pokemons.join(',');
+      this.router.navigate(['/duel'], { queryParams: { mode: 'construit', team: ids } });
+    } else {
+      this.router.navigate(['/duel'], { queryParams: { mode: this.selected_game_mode } });
+    }
   }
 
   naviguer(route: string) {

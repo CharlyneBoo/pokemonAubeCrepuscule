@@ -16,7 +16,7 @@ class User(Base):
     pseudo = Column(String(100), nullable=False)
     team_color = Column(String(50), nullable=False)
     avatar_url = Column(String(255), nullable=True)
-    aura = Column(Integer, nullable=False, default=0)
+    aura = Column(Integer, nullable=False, default=500)
     created_at = Column(DateTime, server_default=func.now())
     pokemon_team = relationship("PokemonTeam", back_populates="owner")
 

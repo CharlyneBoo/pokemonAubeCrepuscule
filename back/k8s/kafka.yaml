@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: pokemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      initContainers:
+      - name: wait-for-zookeeper
+        image: busybox
+        command: ['sh', '-c', 'until nc -z -w 2 zookeeper 2181; do echo waiting for zookeeper; sleep 2; done']
+      containers:
+      - name: kafka
+        image: confluentinc/cp-kafka:7.6.1
+        env:
+        - name: KAFKA_BROKER_ID
+          value: "1"
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: "zookeeper:2181"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://kafka:9092"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "1"
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "1"
+        - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "1"
+        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+          value: "true"
+        - name: KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS
+          value: "0"
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx512m -Xms256m"
+        ports:
+        - containerPort: 9092
+        resources:
+          requests:
+            memory: "512Mi"
+          limits:
+            memory: "1Gi"
+        readinessProbe:
+          exec:
+            command: ["kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: pokemon
+spec:
+  selector:
+    app: kafka
+  ports:
+  - port: 9092
+    targetPort: 9092

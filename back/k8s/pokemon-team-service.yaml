@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pokemon-team-service
+  namespace: pokemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pokemon-team-service
+  template:
+    metadata:
+      labels:
+        app: pokemon-team-service
+    spec:
+      containers:
+      - name: pokemon-team-service
+        image: pokemon-team-service:latest
+        imagePullPolicy: Never
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pokemon-team-service
+  namespace: pokemon
+spec:
+  selector:
+    app: pokemon-team-service
+  ports:
+  - port: 8003
+    targetPort: 8000

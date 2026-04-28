@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: battle-engine
+  namespace: pokemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: battle-engine
+  template:
+    metadata:
+      labels:
+        app: battle-engine
+    spec:
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox
+        command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done']
+      containers:
+      - name: battle-engine
+        image: battle-engine:latest
+        imagePullPolicy: Never
+        env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: battle-engine
+  namespace: pokemon
+spec:
+  selector:
+    app: battle-engine
+  ports:
+  - port: 8005
+    targetPort: 8000

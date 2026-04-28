@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pokemon-service
+  namespace: pokemon
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pokemon-service
+  template:
+    metadata:
+      labels:
+        app: pokemon-service
+    spec:
+      containers:
+      - name: pokemon-service
+        image: pokemon-service:latest
+        imagePullPolicy: Never
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pokemon-service
+  namespace: pokemon
+spec:
+  selector:
+    app: pokemon-service
+  ports:
+  - port: 8002
+    targetPort: 8000

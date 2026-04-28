@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-init
+  namespace: pokemon
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox
+        command: ['sh', '-c', 'until nc -z kafka 9092; do echo waiting for kafka; sleep 2; done']
+      containers:
+      - name: kafka-init
+        image: confluentinc/cp-kafka:7.6.1
+        command:
+        - bash
+        - -c
+        - |
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic chat.global --partitions 1 --replication-factor 1 &&
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic chat.red --partitions 1 --replication-factor 1 &&
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic chat.blue --partitions 1 --replication-factor 1 &&
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic battle.commands --partitions 1 --replication-factor 1 &&
+          echo "Topics créés"

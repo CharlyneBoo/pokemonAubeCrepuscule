@@ -48,9 +48,9 @@
               Construit
             </button>
             <button
-              (click)="choisir_mode('pioche')"
+              (click)="choisir_mode('draft')"
               [ngClass]="
-                selected_game_mode === 'pioche'
+                selected_game_mode === 'draft'
                   ? 'bg-[#311b5e] text-white shadow-inner'
                   : 'bg-gray-200 text-black'
               "
@@ -63,21 +63,40 @@
 
         <div class="flex justify-between items-center mt-6">
           <button
-            class="bg-gray-200 px-4 py-2 font-bold text-black shadow-md hover:bg-gray-300 transition-colors text-sm rounded"
+            (click)="ouvrir_choix_equipe()"
+            class="bg-gray-200 px-4 py-2 font-bold text-black shadow-md hover:bg-gray-300 transition-colors text-sm rounded max-w-[200px] truncate"
           >
-            Choose a team
+            {{
+              equipe_selectionnee
+                ? 'Équipe : ' + (equipe_selectionnee.name || equipe_selectionnee.nom)
+                : 'Choose a team'
+            }}
           </button>
-          <button
-            (click)="lancer_partie()"
-            class="font-black text-2xl transition-colors animate-pulse"
-            [ngClass]="
-              user.team_color === 'red'
-                ? 'text-[#db5151] hover:text-red-700'
-                : 'text-[#6a4cef] hover:text-blue-700'
-            "
-          >
-            START GAME
-          </button>
+
+          <div class="flex flex-col items-end">
+            <button
+              (click)="lancer_partie()"
+              [disabled]="selected_game_mode === 'construit' && !equipe_selectionnee"
+              [ngClass]="{
+                'opacity-50 cursor-not-allowed':
+                  selected_game_mode === 'construit' && !equipe_selectionnee,
+              }"
+              class="font-black text-2xl transition-colors animate-pulse disabled:animate-none"
+              [ngClass]="
+                user.team_color === 'red'
+                  ? 'text-[#db5151] hover:text-red-700'
+                  : 'text-[#6a4cef] hover:text-blue-700'
+              "
+            >
+              START GAME
+            </button>
+            <span
+              *ngIf="selected_game_mode === 'construit' && !equipe_selectionnee"
+              class="text-xs text-red-500 font-bold mt-1"
+            >
+              ⚠️ Sélectionnez une équipe
+            </span>
+          </div>
         </div>
 
         <div
@@ -141,6 +160,7 @@
             class="absolute left-[3.5%] top-[31.5%] z-30 w-80 text-center text-[10px] md:text-sm font-bold bg-transparent hover:bg-white/20 text-white py-1 rounded-md transition-all"
           >
             {{ user.team_color | uppercase }}
+            <span *ngIf="isEditing" class="text-[10px] text-gray-500">CLIQUE POUR CHANGER</span>
           </div>
 
           <button
@@ -192,6 +212,87 @@
           <p class="font-bold text-green-600 italic">
             Tortank Gagne, Pierre200326 remporte le tour !
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="show_team_modal"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+>
+  <div
+    class="bg-white rounded-[2rem] p-8 w-[700px] max-h-[80vh] overflow-y-auto shadow-2xl relative border-8 border-[#311b5e]"
+  >
+    <button
+      (click)="show_team_modal = false"
+      class="absolute top-4 right-6 text-gray-400 hover:text-red-500 font-black text-3xl transition-colors"
+    >
+      &times;
+    </button>
+
+    <h2
+      class="text-4xl font-black text-[#311b5e] mb-6 text-center tracking-wide"
+      style="font-family: 'Courier New', Courier, monospace"
+    >
+      TES ÉQUIPES
+    </h2>
+
+    <div
+      *ngIf="mes_equipes.length === 0"
+      class="text-center text-gray-500 italic py-8 bg-gray-100 rounded-xl"
+    >
+      Tu n'as pas encore d'équipe... Crées-en une dans "Mes équipes" !
+    </div>
+
+    <div class="flex flex-col gap-4">
+      <div
+        *ngFor="let eq of mes_equipes"
+        (click)="eq.pokemons?.length === 6 ? choisir_equipe(eq) : null"
+        class="p-4 rounded-xl border-4 transition-all"
+        [ngClass]="
+          eq.pokemons?.length === 6
+            ? 'border-gray-200 hover:border-green-400 cursor-pointer hover:bg-green-50 shadow-sm hover:shadow-md'
+            : 'border-red-200 bg-red-50 opacity-70 cursor-not-allowed'
+        "
+      >
+        <div
+          class="flex justify-between items-center font-bold mb-3 border-b-2 border-gray-200 pb-2"
+        >
+          <span class="text-xl text-gray-800">{{ eq.name || eq.nom || 'Équipe sans nom' }}</span>
+
+          <span
+            [ngClass]="
+              eq.pokemons?.length === 6 ? 'bg-green-100 text-green-700' : 'bg-red-200 text-red-800'
+            "
+            class="px-3 py-1 rounded-full text-sm"
+          >
+            {{ eq.pokemons?.length || 0 }}/6 Pokémon
+          </span>
+        </div>
+
+        <div class="flex gap-3 h-16 items-center">
+          <div
+            *ngFor="let pId of eq.pokemons"
+            class="h-full w-16 bg-white rounded-full border-2 border-gray-200 flex items-center justify-center shadow-inner p-1"
+          >
+            <img
+              [src]="
+                'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/' +
+                pId +
+                '.png'
+              "
+              class="max-h-full object-contain drop-shadow-md"
+            />
+          </div>
+
+          <div
+            *ngFor="let dummy of [].constructor(6 - (eq.pokemons?.length || 0))"
+            class="h-full w-16 bg-gray-100 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center opacity-50"
+          >
+            <span class="text-gray-400 font-bold">?</span>
+          </div>
         </div>
       </div>
     </div>

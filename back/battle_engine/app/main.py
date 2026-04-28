@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+import random 
 import asyncio
 from datetime import datetime, timezone
 import httpx
@@ -22,6 +23,12 @@ app.add_middleware(
 class ConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, list[WebSocket]] = {}
+        
+        # Draft
+        self.draft_states: dict[str, dict] = {} 
+        
+        # Equipes du mode consruit 
+        self.construit_teams: dict[str, dict] = {} 
 
     async def connect(self, websocket: WebSocket, match_id: str, mode: str):
         await websocket.accept()
@@ -29,38 +36,31 @@ class ConnectionManager:
             self.active_connections[match_id] = []
         self.active_connections[match_id].append(websocket)
 
-        # Si les deux joueurs sont là, on prépare le match
+        # Dès que les 2 joueurs sont là, on peut enchainer sur le mode
         if len(self.active_connections[match_id]) == 2:
-            
             if mode == "hasard":
                 async with httpx.AsyncClient() as client:
-                    try:
-                        reponse = await client.get("http://duel-service:8000/generate-random-teams")
-                        donnees_arbitre = reponse.json()
-                        
-                        message_depart = {
-                            "kind": "match_start",
-                            "mode": "hasard",
-                            "message": "Les équipes aléatoires ont été générées ! Le match commence.",
-                            "red_team_ids": donnees_arbitre["red_team_ids"],
-                            "blue_team_ids": donnees_arbitre["blue_team_ids"],
-                            "red_active_index": donnees_arbitre["red_active_index"],
-                            "blue_active_index": donnees_arbitre["blue_active_index"]
-                        }
-                    except Exception as e:
-                        print("Erreur de connexion au Service Duel:", e)
-                        message_depart = {"kind": "error", "message": "L'arbitre est introuvable."}
-
-            else:
-                message_depart = {
-                    "kind": "match_start",
-                    "mode": mode,
-                    "message": f"Le match commence en mode {mode} !"
-                }
+                    reponse = await client.get("http://duel-service:8000/generate-random-teams")
+                    donnees = reponse.json()
+                    message_depart = {
+                        "kind": "match_start", "mode": "hasard",
+                        "message": "Les équipes aléatoires ont été générées ! Le match commence.",
+                        "red_team_ids": donnees["red_team_ids"], "blue_team_ids": donnees["blue_team_ids"],
+                        "red_active_index": donnees["red_active_index"], "blue_active_index": donnees["blue_active_index"]
+                    }
+                await self.broadcast_to_match(message_depart, match_id)
                 
-            # On envoie les infos aux deux joueurs via WebSocket
-            await self.broadcast_to_match(message_depart, match_id)
-
+            elif mode == "draft":
+                async with httpx.AsyncClient() as client:
+                    reponse = await client.get("http://duel-service:8000/generate-random-teams")
+                    donnees = reponse.json()
+                    pool_ids = donnees["red_team_ids"] + donnees["blue_team_ids"]
+                    
+                    self.draft_states[match_id] = {
+                        "pool": pool_ids, "red_team": [], "blue_team": [], "turn": "red"
+                    }
+                    await self.broadcast_draft_state(match_id)
+            
     def disconnect(self, websocket: WebSocket, match_id: str):
         if match_id in self.active_connections:
             self.active_connections[match_id].remove(websocket)
@@ -69,6 +69,65 @@ class ConnectionManager:
         if match_id in self.active_connections:
             for connection in self.active_connections[match_id]:
                 await connection.send_json(message)
+
+    async def broadcast_draft_state(self, match_id: str):
+        state = self.draft_states[match_id]
+        msg = {
+            "kind": "draft_update",
+            "pool": state["pool"], "red_team": state["red_team"], "blue_team": state["blue_team"],
+            "turn": state["turn"], "message": f"Au tour du joueur {'Rouge' if state['turn'] == 'red' else 'Bleu'} de choisir !"
+        }
+        await self.broadcast_to_match(msg, match_id)
+
+    # Gère quand un joueur clique sur un Pokémon pendant la draft
+    async def draft_pick(self, match_id: str, player: str, pokemon_id: int):
+        if match_id not in self.draft_states: return
+        state = self.draft_states[match_id]
+        
+        if state["turn"] != player or pokemon_id not in state["pool"]: return
+        
+        state["pool"].remove(pokemon_id)
+        if player == "red":
+            state["red_team"].append(pokemon_id)
+            state["turn"] = "blue"
+        else:
+            state["blue_team"].append(pokemon_id)
+            state["turn"] = "red"
+            
+        if len(state["pool"]) == 0:
+            msg = {
+                "kind": "match_start", "mode": "draft",
+                "message": "Draft terminée ! Que le combat commence !",
+                "red_team_ids": state["red_team"], "blue_team_ids": state["blue_team"],
+                "red_active_index": random.randint(0, 5), "blue_active_index": random.randint(0, 5)
+            }
+            await self.broadcast_to_match(msg, match_id)
+            del self.draft_states[match_id] 
+        else:
+            await self.broadcast_draft_state(match_id)
+
+
+    # Gère quand les joueurs rejoignent l'arène avec leurs équipes persos
+    async def process_join_construit(self, match_id: str, player: str, team_ids: list[int]):
+        if match_id not in self.construit_teams:
+            self.construit_teams[match_id] = {}
+        
+        # On stocke l'équipe du joueur
+        self.construit_teams[match_id][player] = team_ids
+
+        # Si les deux joueurs ont envoyé leur équipe, on lance le match
+        if "red" in self.construit_teams[match_id] and "blue" in self.construit_teams[match_id]:
+            msg = {
+                "kind": "match_start", 
+                "mode": "construit",
+                "message": "Les équipes personnalisées sont validées ! Le combat commence.",
+                "red_team_ids": self.construit_teams[match_id]["red"],
+                "blue_team_ids": self.construit_teams[match_id]["blue"],
+                "red_active_index": 0, 
+                "blue_active_index": 0
+            }
+            await self.broadcast_to_match(msg, match_id)
+            del self.construit_teams[match_id]
 
 ws_manager = ConnectionManager()
 
@@ -94,7 +153,6 @@ pending: dict[tuple[str, int], dict[str, dict]] = {}
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-# --- 5. FONCTIONS MÉTIER ---
 async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_choice: dict, resultat_duel: dict):
     global producer
     assert producer is not None
@@ -121,7 +179,6 @@ async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_c
         "message": f"Résultat tour {turn} : {resultat_duel.get('message')}"
     }
 
-    # On envoie à Kafka
     await producer.send_and_wait(
         CHAT_GLOBAL_TOPIC,
         json.dumps(result).encode("utf-8"),
@@ -161,7 +218,7 @@ async def consume_commands_loop():
             pending.setdefault(key, {})
             pending[key][team] = payload
 
-            print(f"📩 [BattleEngine] reçu choice {team} pour {key}", flush=True)
+            print(f" [BattleEngine] reçu choice {team} pour {key}", flush=True)
 
             if "red" in pending[key] and "blue" in pending[key]:
                 red_choice = pending[key]["red"]
@@ -188,8 +245,6 @@ async def consume_commands_loop():
 
     finally:
         await consumer.stop()
-
-# --- 6. LES ROUTES API ---
 
 @app.post("/battle/action")
 async def receive_player_action(action_data: PlayerAction):
@@ -221,7 +276,21 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
     await ws_manager.connect(websocket, match_id, mode)
     try:
         while True:
-            data = await websocket.receive_text()
+            data = await websocket.receive_json()
+            if data.get("kind") == "forfeit":
+                loser_color = data.get("player")
+                winner_color = "blue" if loser_color == "red" else "red"
+                
+                await ws_manager.broadcast_to_match({
+                    "kind": "forfeit_notice",
+                    "loser": loser_color,
+                    "winner": winner_color,
+                    "message": f"Le joueur {loser_color} a déclaré forfait !"
+                }, match_id)
+            if data.get("kind") == "draft_pick":
+                await ws_manager.draft_pick(match_id, data.get("player"), data.get("pokemon_id"))
+            elif data.get("kind") == "join_construit":
+                await ws_manager.process_join_construit(match_id, data.get("player"), data.get("team_ids"))
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket, match_id)
 

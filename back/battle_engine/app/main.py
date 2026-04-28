@@ -23,6 +23,7 @@ app.add_middleware(
 class ConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, list[WebSocket]] = {}
+        self.player_presence: dict[str, dict[str, dict]] = {}
         
         # Draft
         self.draft_states: dict[str, dict] = {} 
@@ -35,6 +36,7 @@ class ConnectionManager:
         if match_id not in self.active_connections:
             self.active_connections[match_id] = []
         self.active_connections[match_id].append(websocket)
+        self.player_presence.setdefault(match_id, {})
 
         # Dès que les 2 joueurs sont là, on peut enchainer sur le mode
         if len(self.active_connections[match_id]) == 2:
@@ -64,11 +66,30 @@ class ConnectionManager:
     def disconnect(self, websocket: WebSocket, match_id: str):
         if match_id in self.active_connections:
             self.active_connections[match_id].remove(websocket)
+            if not self.active_connections[match_id]:
+                self.active_connections.pop(match_id, None)
+                self.player_presence.pop(match_id, None)
 
     async def broadcast_to_match(self, message: dict, match_id: str):
         if match_id in self.active_connections:
             for connection in self.active_connections[match_id]:
                 await connection.send_json(message)
+
+    async def register_player(self, match_id: str, player: str, pseudo: str):
+        self.player_presence.setdefault(match_id, {})
+        self.player_presence[match_id][player] = {
+            "player": player,
+            "pseudo": pseudo,
+        }
+        for presence in self.player_presence[match_id].values():
+            await self.broadcast_to_match(
+                {
+                    "kind": "opponent_info",
+                    "player": presence["player"],
+                    "pseudo": presence["pseudo"],
+                },
+                match_id,
+            )
 
     async def broadcast_draft_state(self, match_id: str):
         state = self.draft_states[match_id]
@@ -277,6 +298,12 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
     try:
         while True:
             data = await websocket.receive_json()
+            if data.get("kind") == "hello":
+                await ws_manager.register_player(
+                    match_id,
+                    data.get("player", "unknown"),
+                    data.get("pseudo", "Joueur"),
+                )
             if data.get("kind") == "forfeit":
                 loser_color = data.get("player")
                 winner_color = "blue" if loser_color == "red" else "red"

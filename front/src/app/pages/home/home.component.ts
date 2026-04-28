@@ -1,4 +1,4 @@
-import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms'; 
@@ -11,7 +11,8 @@ import { PokemonTeamService } from '../../services/pokemon_team.service';
   imports: [CommonModule, FormsModule], 
   templateUrl: './home.component.html',
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
+  readonly HOME_CHAT_ROOM = 'home_global';
   isEditing = false;
 
   user: any = {
@@ -27,6 +28,9 @@ export class HomeComponent implements OnInit {
   
   show_team_modal: boolean = false;
   mes_equipes: any[] = [];
+  home_chat_messages: Array<{ user: string; text: string; is_self: boolean }> = [];
+  home_chat_input: string = '';
+  home_chat_socket: WebSocket | null = null;
 
   constructor(
     private router: Router, 
@@ -39,6 +43,10 @@ export class HomeComponent implements OnInit {
     this.chargerProfil();
   }
 
+  ngOnDestroy() {
+    this.home_chat_socket?.close();
+  }
+
   async chargerProfil() {
     if (isPlatformBrowser(this.platformId)) {
       try {
@@ -46,7 +54,8 @@ export class HomeComponent implements OnInit {
         this.user.id = data.id; 
         this.user.pseudo = data.pseudo;
         this.user.team_color = data.team_color || 'red';
-                this.charger_mes_equipes();
+        this.charger_mes_equipes();
+        this.connect_home_chat();
         
       } catch (err) {
         console.error("Erreur d'authentification ou non connecté :", err);
@@ -118,5 +127,61 @@ export class HomeComponent implements OnInit {
 
   naviguer(route: string) {
     this.router.navigate([route]);
+  }
+
+  connect_home_chat() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    this.home_chat_socket?.close();
+    this.home_chat_socket = new WebSocket(`ws://localhost:8006/ws/chat/${this.HOME_CHAT_ROOM}`);
+
+    this.home_chat_socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.kind === 'chat_history' && Array.isArray(data.entries)) {
+        this.home_chat_messages = data.entries
+          .filter((entry: any) => entry.channel === 'chat')
+          .map((entry: any) => ({
+            user: entry.user,
+            text: entry.text,
+            is_self: entry.user === this.user.pseudo,
+          }));
+        this.scroll_home_chat();
+        return;
+      }
+
+      if (data.kind === 'chat_message' && data.entry) {
+        this.home_chat_messages.push({
+          user: data.entry.user,
+          text: data.entry.text,
+          is_self: data.entry.user === this.user.pseudo,
+        });
+        this.scroll_home_chat();
+      }
+    };
+  }
+
+  send_home_chat_message() {
+    const message = this.home_chat_input.trim();
+    if (!message || !this.home_chat_socket || this.home_chat_socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    this.home_chat_socket.send(JSON.stringify({
+      kind: 'player_message',
+      player: this.user.team_color,
+      pseudo: this.user.pseudo || 'Joueur',
+      message,
+    }));
+    this.home_chat_input = '';
+  }
+
+  private scroll_home_chat() {
+    setTimeout(() => {
+      const container = document.querySelector('.home-chat-messages');
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 50);
   }
 }

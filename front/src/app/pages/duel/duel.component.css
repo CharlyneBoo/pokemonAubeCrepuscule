@@ -48,3 +48,7 @@
 .active-pokemon img {
   height: 200px;
 }
+
+.chat-panel {
+  overflow: hidden;
+}

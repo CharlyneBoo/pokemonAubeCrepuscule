@@ -158,5 +158,26 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: on-failure
 
+  chat_service:
+    build:
+      context: ./chat_service
+      dockerfile: Dockerfile
+    container_name: chat_service
+    ports:
+      - "8006:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: fastapi_db
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      PYTHONUNBUFFERED: "1"
+    restart: on-failure
+
 volumes:
   db_data:

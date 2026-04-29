@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Auth } from '../../services/auth';
+import { Auth, UserOut } from '../../services/auth';
 import { PokemonTeamService } from '../../services/pokemon_team.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -51,6 +51,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   home_chat_messages: Array<{ user: string; text: string; is_self: boolean }> = [];
   home_chat_input: string = '';
   home_chat_socket: WebSocket | null = null;
+  user_profiles: UserOut[] = [];
+  selected_chat_profile: { pseudo: string; avatar_url?: string; aura?: number } | null = null;
 
   constructor(
     private router: Router,
@@ -83,6 +85,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         };
 
         this.charger_mes_equipes();
+        await this.charger_user_profiles();
         this.connect_home_chat();
       } catch (err) {
         console.error("Erreur d'authentification ou non connecté :", err);
@@ -90,6 +93,15 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.router.navigate(['/login']);
       }
       
+    }
+  }
+
+  async charger_user_profiles() {
+    try {
+      this.user_profiles = await this.auth.getUsers();
+    } catch (error) {
+      console.error("Erreur chargement profils utilisateurs :", error);
+      this.user_profiles = [];
     }
   }
 
@@ -262,6 +274,19 @@ export class HomeComponent implements OnInit, OnDestroy {
       message,
     }));
     this.home_chat_input = '';
+  }
+
+  openChatProfile(pseudo: string) {
+    const profile = this.user_profiles.find((user) => user.pseudo === pseudo);
+    this.selected_chat_profile = {
+      pseudo,
+      avatar_url: profile?.avatar_url || '/avatar/gobou.jpeg',
+      aura: profile?.aura ?? 0,
+    };
+  }
+
+  closeChatProfile() {
+    this.selected_chat_profile = null;
   }
 
   private scroll_home_chat() {

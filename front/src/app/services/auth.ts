@@ -5,7 +5,14 @@ import { firstValueFrom } from 'rxjs';
 const API = 'http://localhost:8000';
 
 interface Token { access_token: string; token_type: string; }
-interface UserOut { id: string; email: string; pseudo: string; team_color: string; avatar_url: string}
+export interface UserOut {
+  id: string;
+  email: string;
+  pseudo: string;
+  team_color: string;
+  avatar_url?: string;
+  aura?: number;
+}
 interface UserUpdate { pseudo?: string; team_color?: string; avatar_url?: string; } 
 
 @Injectable({
@@ -41,6 +48,10 @@ export class Auth {
         headers: { Authorization: `Bearer ${this.getToken()}` }
       })
     );
+  }
+
+  async getUsers(): Promise<UserOut[]> {
+    return firstValueFrom(this.http.get<UserOut[]>(`${API}/users`));
   }
 
   getToken(): string | null {

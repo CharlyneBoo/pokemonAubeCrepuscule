@@ -167,9 +167,11 @@ services:
     volumes:
       - ./log_service/app:/code/app
     depends_on:
-      - service_healthy
-      - kafka
-      - db
+      kafka:
+        condition: service_started
+      db:
+        condition: service_healthy
+    
   chat_service:
     build:
       context: ./chat_service

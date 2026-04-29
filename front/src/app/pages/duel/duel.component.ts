@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth'; 
 import { firstValueFrom } from 'rxjs';
@@ -8,11 +9,12 @@ import { firstValueFrom } from 'rxjs';
 @Component({
   selector: 'app-duel',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './duel.component.html',
   styleUrls: ['./duel.component.css']
 })
 export class DuelComponent implements OnInit, OnDestroy {
+  readonly BOT_NAME = 'Pablob';
 
   //ÉTAT DU JEU 
   current_phase: 'waiting' | 'draft' | 'battle' = 'waiting';
@@ -44,10 +46,14 @@ export class DuelComponent implements OnInit, OnDestroy {
   timer_interval: any;
   
   message_list: any[] = [];
+  chat_messages: any[] = [];
+  active_chat_tab: 'journal' | 'chat' = 'journal';
+  chat_input: string = '';
   match_result: 'win' | 'loss' | 'draw' | null = null;
   winner_name: string = ''; 
   
   socket: WebSocket | null = null;
+  chat_socket: WebSocket | null = null;
 
   constructor(
     private http: HttpClient, private auth: Auth,
@@ -69,10 +75,15 @@ export class DuelComponent implements OnInit, OnDestroy {
         else this.team_color = this.user.team_color;
       } catch (err) { console.error("Non connecté."); }
       this.connect_to_websocket();
+      this.connect_to_chat_socket();
     }
   }
 
-  ngOnDestroy() { if (this.timer_interval) clearInterval(this.timer_interval); if (this.socket) this.socket.close(); }
+  ngOnDestroy() {
+    if (this.timer_interval) clearInterval(this.timer_interval);
+    if (this.socket) this.socket.close();
+    if (this.chat_socket) this.chat_socket.close();
+  }
 
   action_draft_pick(pokemon_id: number) {
     if (this.draft_turn !== this.team_color) return; 
@@ -235,12 +246,9 @@ export class DuelComponent implements OnInit, OnDestroy {
             }
         }
 
-        this.add_bot_message(`Tour ${this.current_turn} : Analyse du backend`);
-
         setTimeout(() => {
           if (data.duel_result) {
             let vainqueur = data.duel_result.winner;
-            if (data.message) this.add_bot_message(data.message);
 
             if (vainqueur === 'red' && this.active_blue) { this.active_blue.is_ko = true; this.active_blue = null; } 
             else if (vainqueur === 'blue' && this.active_red) { this.active_red.is_ko = true; this.active_red = null; }
@@ -257,6 +265,47 @@ export class DuelComponent implements OnInit, OnDestroy {
             this.current_turn++;
           }
         }, 2000); 
+      }
+    };
+  }
+
+  connect_to_chat_socket() {
+    this.chat_socket = new WebSocket(`ws://localhost:8007/ws/chat/${this.match_id}`);
+
+    this.chat_socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.kind === 'chat_history' && Array.isArray(data.entries)) {
+        this.message_list = data.entries
+          .filter((entry: any) => entry.channel === 'journal')
+          .map((entry: any) => ({
+            user: entry.user,
+            text: entry.text,
+            is_bot: true,
+          }));
+        this.chat_messages = [];
+        this.scroll_chat_panel('journal');
+        this.scroll_chat_panel('chat');
+        return;
+      }
+
+      if (data.kind === 'journal_message' && data.entry) {
+        this.message_list.push({
+          user: data.entry.user,
+          text: data.entry.text,
+          is_bot: true,
+        });
+        this.scroll_chat_panel('journal');
+        return;
+      }
+
+      if (data.kind === 'chat_message' && data.entry) {
+        this.chat_messages.push({
+          user: data.entry.user,
+          text: data.entry.text,
+          is_self: data.entry.player === this.team_color,
+        });
+        this.scroll_chat_panel('chat');
       }
     };
   }
@@ -396,8 +445,36 @@ export class DuelComponent implements OnInit, OnDestroy {
   }
 
   add_bot_message(texte: string) {
-    this.message_list.push({ user: 'Pablob', text: texte, is_bot: true });
-    setTimeout(() => { const c = document.querySelector('.chat-area'); if (c) c.scrollTop = c.scrollHeight; }, 50);
+    this.message_list.push({ user: this.BOT_NAME, text: texte, is_bot: true });
+    this.scroll_chat_panel('journal');
+  }
+
+  send_chat_message() {
+    const message = this.chat_input.trim();
+    if (!message || !this.chat_socket || this.chat_socket.readyState !== WebSocket.OPEN) return;
+
+    this.chat_socket.send(JSON.stringify({
+      kind: 'player_message',
+      player: this.team_color,
+      pseudo: this.user?.pseudo || 'Joueur',
+      message,
+    }));
+    this.chat_input = '';
+  }
+
+  select_chat_tab(tab: 'journal' | 'chat') {
+    this.active_chat_tab = tab;
+    this.scroll_chat_panel(tab);
+  }
+
+  private scroll_chat_panel(tab: 'journal' | 'chat') {
+    setTimeout(() => {
+      const selector = tab === 'journal' ? '.journal-messages' : '.player-chat-messages';
+      const container = document.querySelector(selector);
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 50);
   }
 
 }

@@ -4,7 +4,7 @@ import asyncio
 from typing import List
 from contextlib import asynccontextmanager
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -71,7 +71,7 @@ app = FastAPI(title="Auth Service", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -79,6 +79,14 @@ app.add_middleware(
 
 async def publish(topic: str, data: dict):
     await producer.send_and_wait(topic, json.dumps(data).encode())
+
+@app.options("/register")
+async def register_options():
+    return Response(status_code=204)
+
+@app.options("/login")
+async def login_options():
+    return Response(status_code=204)
 
 @app.post("/register", response_model=UserOut)
 async def register(user: UserCreate, db: Session = Depends(get_db)):

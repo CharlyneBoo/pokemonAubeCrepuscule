@@ -1,20 +1,57 @@
+import os
+import json
+import asyncio
 from typing import List
+from contextlib import asynccontextmanager
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import FastAPI, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from contextlib import asynccontextmanager
-from aiokafka import AIOKafkaProducer
+from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
+
 from .database import Base, engine, get_db
-from .models import User
+from .models import User, MatchHistory
 from .schema import UserCreate, UserLogin, UserOut, Token, UserUpdate
 from .auth import hash_password, verify_password, create_token, decode_token
-import json
-import os
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 
 producer: AIOKafkaProducer = None
+security = HTTPBearer()
+
+async def consume_history_loop():
+    consumer = AIOKafkaConsumer(
+        "match.history", # On écoute le topic de l'historique
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+        group_id="history-saver",
+        auto_offset_reset="latest"
+    )
+    await consumer.start()
+    print("[Auth Service] En écoute de l'historique des matchs...")
+    
+    try:
+        async for msg in consumer:
+            data = json.loads(msg.value.decode("utf-8"))
+            if data.get("kind") == "match_finished":
+                db = next(get_db()) # On ouvre une session BDD
+                
+                # On sauvegarde en base de données
+                new_history = MatchHistory(
+                    match_uuid=data.get("match_uuid", "inconnu"),
+                    player_red_id=data.get("player_red", "inconnu"),
+                    player_blue_id=data.get("player_blue", "inconnu"),
+                    winner_id=data.get("winner"),
+                    game_mode=data.get("game_mode", "inconnu"),
+                    match_logs=data.get("match_logs", [])
+                )
+                db.add(new_history)
+                db.commit()
+                print(f"[Auth Service] Historique sauvegardé : {data.get('match_uuid')}")
+    except Exception as e:
+        print(f"Erreur Consumer Historique : {e}")
+    finally:
+        await consumer.stop()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,8 +59,13 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
     await producer.start()
+    
+    # Lancement du consumer en fond au démarrage de l'API
+    asyncio.create_task(consume_history_loop())
+    
     yield
     await producer.stop()
+
 
 app = FastAPI(title="Auth Service", lifespan=lifespan)
 
@@ -56,6 +98,11 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     await publish("user.registered", {"user_id": new_user.id, "email": new_user.email})
+    if producer:
+        await producer.send_and_wait("system.logs", json.dumps({
+            "service": "AuthService",
+            "message": f"Nouvelle inscription : {new_user.pseudo} ({new_user.email})"
+        }).encode("utf-8"))
     return new_user
 
 @app.post("/login", response_model=Token)
@@ -66,6 +113,11 @@ async def login(data: UserLogin, db: Session = Depends(get_db)):
 
     token = create_token(user.id)
     await publish("user.logged_in", {"user_id": user.id})
+    if producer:
+        await producer.send_and_wait("system.logs", json.dumps({
+            "service": "AuthService",
+            "message": f"Connexion réussie pour l'utilisateur : {data.email}"
+        }).encode("utf-8"))
     return {"access_token": token, "token_type": "bearer"}
 
 @app.get("/me", response_model=UserOut)
@@ -100,7 +152,7 @@ async def update_profile(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    update_data = data.dict(exclude_unset=True) # Ne prend que les champs envoyés dans le JSON
+    update_data = data.dict(exclude_unset=True) 
     
     for key, value in update_data.items():
         setattr(user, key, value)
@@ -142,3 +194,22 @@ async def update_aura(
     await publish("user.aura_updated", {"user_id": current_user.id, "new_aura": current_user.aura})
     
     return {"message": "Aura mise à jour", "nouvelle_aura": current_user.aura}
+
+@app.get("/users/me/history")
+def get_my_match_history(authorization: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    try:
+        token = authorization.credentials
+        user_id = decode_token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    history = db.query(MatchHistory).filter(
+        (MatchHistory.player_red_id == user.pseudo) | 
+        (MatchHistory.player_blue_id == user.pseudo)
+    ).order_by(MatchHistory.created_at.desc()).all()
+    
+    return history

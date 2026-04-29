@@ -144,7 +144,7 @@
       *ngFor="let m of message_list"
       [ngClass]="{ 'text-blue-800 font-bold bg-blue-50 p-1 rounded': m.is_bot }"
     >
-      <span>{{ m.user }} : </span> <span>{{ m.text }}</span>
+      <span>{{ m.user }} : </span><span class="whitespace-pre-line">{{ m.text }}</span>
     </div>
   </div>
 </div>
@@ -158,7 +158,7 @@
     [ngClass]="{
       'border-[#22c55e]': match_result === 'win',
       'border-[#ef4444]': match_result === 'loss',
-      'border-gray-400': match_result === 'draw',
+      'border-[#4b5563]': match_result === 'draw',
     }"
   >
     <div
@@ -166,7 +166,7 @@
       [ngClass]="{
         'bg-[#22c55e]': match_result === 'win',
         'bg-[#ef4444]': match_result === 'loss',
-        'bg-gray-500': match_result === 'draw',
+        'bg-[#4b5563]': match_result === 'draw',
       }"
     >
       RÉSULTAT
@@ -177,17 +177,26 @@
       [ngClass]="{
         'text-[#22c55e]': match_result === 'win',
         'text-[#ef4444]': match_result === 'loss',
-        'text-gray-600': match_result === 'draw',
+        'text-[#374151]': match_result === 'draw',
       }"
     >
       {{ match_result === 'win' ? 'VICTOIRE' : match_result === 'loss' ? 'DÉFAITE' : 'ÉGALITÉ' }}
     </h2>
 
     <div class="mb-8">
-      <div class="text-[#311b5e] text-3xl font-black uppercase tracking-wider">
-        {{ winner_name }}
+      <div
+        class="text-[#311b5e] text-3xl font-black uppercase tracking-wider"
+        [ngClass]="{ '!text-[#4b5563]': match_result === 'draw' }"
+      >
+        {{ match_result === 'draw' ? 'Aucun vainqueur' : winner_name }}
       </div>
-      <div class="text-gray-500 font-bold text-lg">a remporté le match !</div>
+      <div class="text-gray-500 font-bold text-lg">
+        {{
+          match_result === 'draw'
+            ? 'Le combat se termine sur un score nul !'
+            : 'a remporté le match !'
+        }}
+      </div>
     </div>
 
     <div
@@ -195,19 +204,23 @@
       [ngClass]="{
         'border-[#22c55e]': match_result === 'win',
         'border-[#ef4444]': match_result === 'loss',
-        'border-gray-300': match_result === 'draw',
+        'border-[#d1d5db]': match_result === 'draw',
       }"
     >
       <div class="flex flex-col text-left leading-tight">
         <span class="text-gray-300 font-bold text-xs uppercase">Aura</span>
-        <span class="text-[#311b5e] font-black text-sm uppercase">Score</span>
+        <span
+          class="text-[#311b5e] font-black text-sm uppercase"
+          [ngClass]="{ '!text-[#4b5563]': match_result === 'draw' }"
+          >Score</span
+        >
       </div>
       <span
         class="text-5xl font-black"
         [ngClass]="{
           'text-[#22c55e]': match_result === 'win',
           'text-[#ef4444]': match_result === 'loss',
-          'text-gray-400': match_result === 'draw',
+          'text-[#4b5563]': match_result === 'draw',
         }"
       >
         {{ match_result === 'win' ? '+10' : match_result === 'loss' ? '-10' : '0' }}
@@ -220,31 +233,36 @@
       [ngClass]="{
         'bg-[#22c55e] hover:bg-[#1db053]': match_result === 'win',
         'bg-[#ef4444] hover:bg-[#d93a3a]': match_result === 'loss',
-        'bg-gray-700': match_result === 'draw',
+        'bg-[#4b5563] hover:bg-[#374151]': match_result === 'draw',
       }"
     >
       Retour au Menu
     </button>
   </div>
 </div>
+
 <ng-template #mySidebar>
   <div class="flex flex-col gap-3 h-full items-center">
     <div
-      class="text-center font-bold text-gray-700 bg-white/70 rounded py-1 border-2 w-full"
+      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight"
       [ngClass]="
-        team_color === 'red' ? 'border-red-400 text-red-700' : 'border-blue-400 text-blue-700'
+        team_color === 'red' ? 'border-red-500 text-red-600' : 'border-blue-500 text-blue-600'
       "
     >
-      Mon Équipe
+      {{ user?.pseudo ? user.pseudo : 'Mon Équipe' }}
     </div>
 
     <div *ngFor="let p of my_team" class="relative">
       <button
         (click)="action_switch(p)"
         [disabled]="
-          is_game_over || p.is_ko || p === get_my_active_pokemon() || current_phase === 'draft'
+          is_game_over ||
+          p.is_ko ||
+          p === get_my_active_pokemon() ||
+          current_phase === 'draft' ||
+          has_played
         "
-        class="aspect-[3/4] w-20 flex-shrink-0 bg-white border-2 p-2 rounded-lg hover:bg-yellow-100 shadow flex items-center justify-center transition-all"
+        class="aspect-[3/4] w-20 flex-shrink-0 bg-white border-2 p-2 rounded-lg hover:bg-yellow-100 shadow flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         [ngClass]="{
           'border-green-500 bg-green-50 ring-2 ring-green-400 scale-110 z-10':
             p === get_my_active_pokemon(),
@@ -257,11 +275,11 @@
 
     <div *ngIf="current_phase === 'battle'" class="mt-auto flex flex-col gap-2 w-full">
       <button
-        class="bg-blue-600 text-white font-bold py-2 px-2 rounded disabled:opacity-50 text-sm shadow"
+        class="bg-blue-600 text-white font-bold py-2 px-2 rounded disabled:opacity-50 disabled:bg-gray-500 text-sm shadow transition-all"
         (click)="action_stay()"
-        [disabled]="is_game_over || !get_my_active_pokemon()"
+        [disabled]="is_game_over || !get_my_active_pokemon() || has_played"
       >
-        STAY
+        {{ has_played ? 'EN ATTENTE...' : 'STAY' }}
       </button>
       <button
         class="bg-red-600 text-white font-bold py-1 px-2 rounded disabled:opacity-50 text-sm shadow"
@@ -277,9 +295,9 @@
 <ng-template #oppSidebar>
   <div class="flex flex-col gap-3 h-full items-center">
     <div
-      class="text-center font-bold text-gray-700 bg-gray-300 rounded py-1 border-2 border-gray-400 w-full"
+      class="text-center font-black text-gray-700 bg-gray-200 rounded-lg py-2 border-2 border-gray-400 w-full shadow-sm break-words px-1 leading-tight"
     >
-      Adversaire
+      {{ opponent_pseudo }}
     </div>
 
     <div

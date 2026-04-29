@@ -23,8 +23,8 @@ export class DuelComponent implements OnInit, OnDestroy {
   current_turn: number = 1;
   showLeaveWarning: boolean = false;
   showForfeitConfirm: boolean = false;
-  
-  //DONNÉES DES JOUEURS ET ÉQUIPES
+  has_played: boolean = false; 
+  forfeits_received: string[] = [];
   user: any = null;
   team_color: string = 'red'; 
   opponent_pseudo: string = 'Adversaire'; 
@@ -55,7 +55,6 @@ export class DuelComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
-    // Récupération des paramètres de l'URL 
     this.route.queryParams.subscribe(params => {
       if (params['mode']) this.game_mode = params['mode'];
       if (params['team']) this.my_team_ids = params['team'].split(',').map(Number);
@@ -75,7 +74,6 @@ export class DuelComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() { if (this.timer_interval) clearInterval(this.timer_interval); if (this.socket) this.socket.close(); }
 
-
   action_draft_pick(pokemon_id: number) {
     if (this.draft_turn !== this.team_color) return; 
     this.socket?.send(JSON.stringify({
@@ -87,12 +85,12 @@ export class DuelComponent implements OnInit, OnDestroy {
   get_opp_active_pokemon() { return this.team_color === 'red' ? this.active_blue : this.active_red; }
 
   action_stay() {
-    if (this.is_game_over) return;
+    if (this.is_game_over || this.has_played) return;
     this.send_action_to_backend('stay', null);
   }
 
   action_switch(pokemon: any) {
-    if (this.is_game_over || pokemon.is_ko || pokemon === this.get_my_active_pokemon()) return; 
+    if (this.is_game_over || pokemon.is_ko || pokemon === this.get_my_active_pokemon() || this.has_played) return; 
     this.my_pending_switch = pokemon; 
     this.send_action_to_backend('switch', pokemon);
   }
@@ -112,6 +110,8 @@ export class DuelComponent implements OnInit, OnDestroy {
   send_action_to_backend(action_type: string, target_pokemon: any) {
     let pokemon_combattant = action_type === 'stay' ? this.get_my_active_pokemon() : target_pokemon;
     if (!pokemon_combattant) return;
+
+    this.has_played = true;
 
     const payload = {
       match_id: this.match_id, turn: this.current_turn, team: this.team_color, action: action_type,
@@ -141,19 +141,51 @@ export class DuelComponent implements OnInit, OnDestroy {
       }
     };
 
-    // Écoute des événements envoyés par le Backend
     this.socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
       
-      // ON RÉCUPÈRE LE PSEUDO DE L'ADVERSAIRE
       if (data.kind === 'opponent_info' && data.player !== this.team_color) {
         this.opponent_pseudo = data.pseudo;
       }
       
-      if (data.kind === 'forfeit_notice') {
+   if (data.kind === 'forfeit_notice') {
+        
+        if (this.has_played) {
+          this.is_game_over = true;
+          clearInterval(this.timer_interval);
+          this.match_result = 'win';
+          this.winner_name = this.user?.pseudo || 'Vous';
+          this.update_aura('win');
+          this.add_bot_message("L'adversaire n'a pas joué à temps. Victoire !");
+          return;
+        }
+
+        if (!this.has_played && this.timer_left <= 2) {
+          this.forfeits_received.push(data.loser);
+
+          setTimeout(() => {
+            if (this.is_game_over) return; 
+
+            this.is_game_over = true;
+            clearInterval(this.timer_interval);
+
+            if (this.forfeits_received.includes('red') && this.forfeits_received.includes('blue')) {
+              this.match_result = 'draw';
+              this.add_bot_message("Temps écoulé pour les deux joueurs ! Égalité parfaite.");
+            } 
+            else {
+              this.match_result = 'loss';
+              this.winner_name = this.opponent_pseudo;
+              this.update_aura('loss');
+              this.add_bot_message("Vous n'avez pas joué à temps. Défaite.");
+            }
+          }, 500); 
+          return;
+        }
+
+        // 3. Abandon manuel au clic (quand le chrono tourne normalement)
         this.is_game_over = true;
         clearInterval(this.timer_interval);
-        
         if (data.loser === this.team_color) {
           this.match_result = 'loss';
           this.winner_name = this.opponent_pseudo;
@@ -163,9 +195,7 @@ export class DuelComponent implements OnInit, OnDestroy {
           this.winner_name = this.user?.pseudo || 'Vous';
           this.update_aura('win');
         }
-        
-        this.add_bot_message(data.message);
-        return; 
+        return;
       }
       
       if (data.kind === 'draft_update') {
@@ -185,6 +215,8 @@ export class DuelComponent implements OnInit, OnDestroy {
       }
 
       if (data.kind === 'turn_result') {
+        this.has_played = false; 
+
         if (this.my_pending_switch) {
           if (this.team_color === 'red') this.active_red = this.my_pending_switch;
           else this.active_blue = this.my_pending_switch;
@@ -195,7 +227,7 @@ export class DuelComponent implements OnInit, OnDestroy {
         let opp_color = this.team_color === 'red' ? 'blue' : 'red';
         let opp_data = data[opp_color];
         if (opp_data && opp_data.choice === 'switch' && opp_data.switch_to) {
-            let opp_p = this.opponent_team.find(p => p.id === opp_data.switch_to);
+            let opp_p = this.opponent_team.find((p: any) => p.id === opp_data.switch_to);
             if (opp_p) {
                if (opp_color === 'red') this.active_red = opp_p;
                else this.active_blue = opp_p;
@@ -256,7 +288,6 @@ export class DuelComponent implements OnInit, OnDestroy {
     let my_idx = this.team_color === 'red' ? data.red_active_index : data.blue_active_index;
     let opp_idx = this.team_color === 'red' ? data.blue_active_index : data.red_active_index;
 
-    // --- LE JOUEUR VOIT TOUJOURS SA PROPRE ÉQUIPE ---
     for (let i = 0; i < my_ids.length; i++) {
       let pkmn = await this.fetch_pokemon_by_id(my_ids[i]);
       if (pkmn) {
@@ -265,7 +296,6 @@ export class DuelComponent implements OnInit, OnDestroy {
       }
     }
 
-    // --- L'ÉQUIPE ADVERSE EST RÉVÉLÉE SAUF EN MODE HASARD ---
     for (let i = 0; i < opp_ids.length; i++) {
       let pkmn = await this.fetch_pokemon_by_id(opp_ids[i]);
       if (pkmn) {
@@ -287,8 +317,17 @@ export class DuelComponent implements OnInit, OnDestroy {
   }
 
   on_time_out() {
-    clearInterval(this.timer_interval); this.is_game_over = true;
-    this.add_bot_message("Temps écoulé ! Le joueur inactif perd la partie.");
+    clearInterval(this.timer_interval); 
+    
+    // Si le chronomètre arrive à 0 et que je n'ai pas joué, je déclare forfait pour inactivité
+    if (!this.has_played) {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify({
+          kind: 'forfeit',
+          player: this.team_color
+        }));
+      }
+    }
   }
 
   verifier_fin_de_match() {
@@ -299,27 +338,46 @@ export class DuelComponent implements OnInit, OnDestroy {
       this.is_game_over = true; 
       clearInterval(this.timer_interval);
       
+      let final_winner = 'draw';
+      
       if (my_alive === 0 && opp_alive === 0) {
         this.match_result = 'draw';
+        final_winner = 'draw';
       } 
       else if (my_alive === 0) {
         this.match_result = 'loss';
+        final_winner = this.team_color === 'red' ? 'blue' : 'red';
         this.winner_name = this.opponent_pseudo || "L'adversaire";
-        this.update_aura('loss');
       } 
       else {
         this.match_result = 'win';
+        final_winner = this.team_color;
         this.winner_name = this.user?.pseudo || 'Vous';
-        this.update_aura('win');
+      }
+
+      if (this.match_result === 'win' || (this.match_result === 'draw' && this.team_color === 'red')) {
+        console.log("🔴 [DEBUG] Envoi du signal match_over au backend ! Gagnant :", final_winner);
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+             this.socket.send(JSON.stringify({
+                 kind: 'match_over',
+                 winner_color: final_winner
+             }));
+        } else {
+             console.error("🔴 [DEBUG] Erreur : Le WebSocket est fermé !");
+        }
+      }
+
+      if (this.match_result === 'loss') {
+          this.update_aura('loss');
+      } else if (this.match_result === 'win') {
+          this.update_aura('win');
       }
     }
   }
 
   update_aura(result: 'win' | 'loss') {
     const url = 'http://localhost:8000/users/me/aura';
-    
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
-    
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });

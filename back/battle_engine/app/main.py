@@ -28,7 +28,9 @@ class ConnectionManager:
         self.draft_states: dict[str, dict] = {} 
         
         # Equipes du mode consruit 
-        self.construit_teams: dict[str, dict] = {} 
+        self.construit_teams: dict[str, dict] = {}
+        
+        self.player_pseudos: dict[str, dict] = {} 
 
     async def connect(self, websocket: WebSocket, match_id: str, mode: str):
         await websocket.accept()
@@ -49,7 +51,11 @@ class ConnectionManager:
                         "red_active_index": donnees["red_active_index"], "blue_active_index": donnees["blue_active_index"]
                     }
                 await self.broadcast_to_match(message_depart, match_id)
-                
+                if producer:
+                    await producer.send_and_wait("system.logs", json.dumps({
+                        "service": "BattleEngine",
+                        "message": f"Nouveau match lancé (ID: {match_id}, Mode: {mode})"
+                    }).encode("utf-8"))
             elif mode == "draft":
                 async with httpx.AsyncClient() as client:
                     reponse = await client.get("http://duel-service:8000/generate-random-teams")
@@ -176,8 +182,7 @@ async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_c
             "switch_to": blue_choice.get("switch_to"),
         },
         "duel_result": resultat_duel,
-        "message": f"Résultat tour {turn} : {resultat_duel.get('message')}"
-    }
+"message": resultat_duel.get("message")    }
 
     await producer.send_and_wait(
         CHAT_GLOBAL_TOPIC,
@@ -223,14 +228,19 @@ async def consume_commands_loop():
             if "red" in pending[key] and "blue" in pending[key]:
                 red_choice = pending[key]["red"]
                 blue_choice = pending[key]["blue"]
-
-                print(f"[BattleEngine] Les deux joueurs ont joué.")
+                pseudos = getattr(ws_manager, 'player_pseudos', {}).get(match_id, {})
+                red_pseudo = pseudos.get("red", "Joueur Rouge")
+                blue_pseudo = pseudos.get("blue", "Joueur Bleu")
 
                 duel_payload = {
+                    "turn": int(turn),
+                    "red_player": red_pseudo,
+                    "blue_player": blue_pseudo,
+                    "red_action": red_choice.get("choice", "stay"),
+                    "blue_action": blue_choice.get("choice", "stay"),
                     "red_pokemon": red_choice.get("pokemon_actif"),
                     "blue_pokemon": blue_choice.get("pokemon_actif")
                 }
-
                 async with httpx.AsyncClient() as client:
                     try:
                         reponse = await client.post("http://duel-service:8000/resolve", json=duel_payload)
@@ -245,6 +255,31 @@ async def consume_commands_loop():
 
     finally:
         await consumer.stop()
+        
+        
+async def save_match_to_history(match_id, red_id, blue_id, winner, mode, logs):
+    """
+    Envoie l'archive complète du match dans Kafka pour qu'elle soit sauvegardée
+    """
+    if producer:
+        unique_uuid = str(uuid.uuid4())
+        
+        history_payload = {
+            "kind": "match_finished",
+            "match_uuid": unique_uuid,  
+            "player_red": red_id,
+            "player_blue": blue_id,
+            "winner": winner,
+            "game_mode": mode,
+            "match_logs": logs, 
+            "finished_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await producer.send_and_wait(
+            "match.history", 
+            json.dumps(history_payload).encode("utf-8")
+        )
+        print(f"[BattleEngine] Match {unique_uuid} envoyé à l'historique.")
 
 @app.post("/battle/action")
 async def receive_player_action(action_data: PlayerAction):
@@ -277,23 +312,79 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
     try:
         while True:
             data = await websocket.receive_json()
-            if data.get("kind") == "forfeit":
+            
+            if data.get("kind") == "hello":
+                if not hasattr(ws_manager, 'player_pseudos'):
+                    ws_manager.player_pseudos = {}
+                if match_id not in ws_manager.player_pseudos:
+                    ws_manager.player_pseudos[match_id] = {}
+                    
+                ws_manager.player_pseudos[match_id][data.get("player")] = data.get("pseudo")
+
+                for p, name in ws_manager.player_pseudos[match_id].items():
+                    await ws_manager.broadcast_to_match({
+                        "kind": "opponent_info",
+                        "player": p,
+                        "pseudo": name
+                    }, match_id)
+
+            elif data.get("kind") == "match_over":
+                winner_color = data.get("winner_color")
+                pseudos = getattr(ws_manager, 'player_pseudos', {}).get(match_id, {})
+                
+                red_pseudo = pseudos.get("red", "Joueur Rouge")
+                blue_pseudo = pseudos.get("blue", "Joueur Bleu")
+                
+                if winner_color == "red":
+                    winner_pseudo = red_pseudo
+                elif winner_color == "blue":
+                    winner_pseudo = blue_pseudo
+                else:
+                    winner_pseudo = "Égalité"
+
+                await save_match_to_history(
+                    match_id=match_id,
+                    red_id=red_pseudo,
+                    blue_id=blue_pseudo,
+                    winner=winner_pseudo,
+                    mode=mode,
+                    logs=[] 
+                )
+
+            elif data.get("kind") == "forfeit":
                 loser_color = data.get("player")
                 winner_color = "blue" if loser_color == "red" else "red"
                 
+                # On prévient les joueurs
                 await ws_manager.broadcast_to_match({
                     "kind": "forfeit_notice",
                     "loser": loser_color,
                     "winner": winner_color,
                     "message": f"Le joueur {loser_color} a déclaré forfait !"
                 }, match_id)
-            if data.get("kind") == "draft_pick":
+                
+                pseudos = getattr(ws_manager, 'player_pseudos', {}).get(match_id, {})
+                red_pseudo = pseudos.get("red", "Joueur Rouge")
+                blue_pseudo = pseudos.get("blue", "Joueur Bleu")
+                winner_pseudo = red_pseudo if winner_color == "red" else blue_pseudo
+                
+                await save_match_to_history(
+                    match_id=match_id,
+                    red_id=red_pseudo,
+                    blue_id=blue_pseudo,
+                    winner=winner_pseudo,
+                    mode=mode,
+                    logs=[] 
+                )
+
+            elif data.get("kind") == "draft_pick":
                 await ws_manager.draft_pick(match_id, data.get("player"), data.get("pokemon_id"))
+                
             elif data.get("kind") == "join_construit":
                 await ws_manager.process_join_construit(match_id, data.get("player"), data.get("team_ids"))
+                
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket, match_id)
-
 
 @app.on_event("startup")
 async def startup():

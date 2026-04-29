@@ -7,7 +7,6 @@ from app.models import PokemonInfo
 
 app = FastAPI(title="Pokemon Service - Pokedex")
 
-# Indispensable pour éviter l'erreur CORS quand Angular appelle FastAPI
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:4200"],
@@ -55,12 +54,12 @@ async def fetch_pokemon_data(pokemon_id: str) -> dict:
                 description = entry["flavor_text"].replace("\n", " ").replace("\f", " ")
                 break
             
-    # --- RECHERCHE DE L'HABITAT ---
+    #  RECHERCHE DE L'HABITAT 
     habitat_name = "Inconnu"
     if "habitat" in species_data and species_data["habitat"] is not None:
         habitat_name = species_data["habitat"]["name"]
 
-    # --- EXTRACTION DES STATS (Boucle classique) ---
+    # EXTRACTION DES STATS 
     stats_finales = {"hp": 0, "attack": 0, "defense": 0, "sp_atk": 0, "sp_def": 0, "speed": 0}
     if "stats" in poke_data:
         for s in poke_data["stats"]:
@@ -74,7 +73,7 @@ async def fetch_pokemon_data(pokemon_id: str) -> dict:
             elif nom_stat == "special-defense": stats_finales["sp_def"] = valeur
             elif nom_stat == "speed": stats_finales["speed"] = valeur
 
-    # --- RECHERCHE DU NOM EN FRANÇAIS ---
+    #  RECHERCHE DU NOM EN FRANÇAIS 
     fr_name = poke_data["name"]
     if "names" in species_data:
         for n in species_data["names"]:

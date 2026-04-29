@@ -127,7 +127,6 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
 
-  # --- MIS À JOUR : DUEL SERVICE ---
   duel-service:
     build: 
       context: ./duel_service 
@@ -158,5 +157,17 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: on-failure
 
+  log_service:
+    build: 
+      context: ./log_service
+      dockerfile: Dockerfile
+    container_name: log_service
+    ports:
+      - "8006:8000"
+    volumes:
+      - ./log_service/app:/code/app
+    depends_on:
+      - kafka
+      - db
 volumes:
   db_data:

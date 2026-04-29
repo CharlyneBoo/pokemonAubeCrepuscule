@@ -167,6 +167,7 @@ services:
     volumes:
       - ./log_service/app:/code/app
     depends_on:
+      - service_healthy
       - kafka
       - db
 volumes:

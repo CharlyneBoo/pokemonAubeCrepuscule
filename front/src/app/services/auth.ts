@@ -5,8 +5,8 @@ import { firstValueFrom } from 'rxjs';
 const API = 'http://localhost:8000';
 
 interface Token { access_token: string; token_type: string; }
-interface UserOut { id: string; email: string; pseudo: string; team_color: string; }
-interface UserUpdate { pseudo?: string; team_color?: string; avatar_url?: string; } // Interface ajoutée pour le typage
+interface UserOut { id: string; email: string; pseudo: string; team_color: string; avatar_url: string}
+interface UserUpdate { pseudo?: string; team_color?: string; avatar_url?: string; } 
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +35,6 @@ export class Auth {
     );
   }
 
-  // Ajout de la méthode updateProfile en utilisant HttpClient
   async updateProfile(userData: UserUpdate): Promise<UserOut> {
     return firstValueFrom(
       this.http.patch<UserOut>(`${API}/update_profile`, userData, {

@@ -21,6 +21,8 @@ export class DuelComponent implements OnInit, OnDestroy {
   is_game_over: boolean = false;
   is_waiting_for_opponent: boolean = true;
   current_turn: number = 1;
+  showLeaveWarning: boolean = false;
+  showForfeitConfirm: boolean = false;
   
   //DONNÉES DES JOUEURS ET ÉQUIPES
   user: any = null;
@@ -96,12 +98,15 @@ export class DuelComponent implements OnInit, OnDestroy {
   }
 
   action_forfeit() {
-    if (confirm("Abandonner la partie ? Cela vous fera perdre 10 points d'Aura.")) {
-      this.socket?.send(JSON.stringify({
-        kind: 'forfeit',
-        player: this.team_color
-      }));
-    }
+    this.showForfeitConfirm = true;
+  }
+
+  execute_forfeit() {
+    this.showForfeitConfirm = false;
+    this.socket?.send(JSON.stringify({
+      kind: 'forfeit',
+      player: this.team_color
+    }));
   }
 
   send_action_to_backend(action_type: string, target_pokemon: any) {

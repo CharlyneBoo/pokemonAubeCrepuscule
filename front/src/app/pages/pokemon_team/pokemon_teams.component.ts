@@ -15,7 +15,8 @@ export class PokemonTeamsComponent implements OnInit {
   user = {
     id: '',
     pseudo: 'Chargement...',
-    team_color: 'bleu'
+    team_color: 'bleu',
+    avatar: '/avatar/gobou.jpeg'
   };
   teams: PokemonTeam[] = [];
 
@@ -32,6 +33,7 @@ export class PokemonTeamsComponent implements OnInit {
         this.user.id = data.id;
         this.user.pseudo = data.pseudo;
         this.user.team_color = data.team_color;
+        this.user.avatar = data.avatar_url ? data.avatar_url : '/avatar/gobou.jpeg';
         this.chargerEquipes();
       } catch (err) {
         console.error("Utilisateur non connecté ou erreur auth :", err);

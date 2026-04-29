@@ -13,14 +13,25 @@ import { PokemonTeamService } from '../../services/pokemon_team.service';
 })
 export class HomeComponent implements OnInit {
   isEditing = false;
+  isAvatarModalOpen = false;
 
   user: any = {
     id: '', 
     pseudo: 'Chargement...',
     team_color: 'red', 
     score: 0,
-    avatar: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png'
+    avatar: '/avatar/gobou.jpeg' 
   };
+
+  availableAvatars: string[] = [
+    '/avatar/carapuce.jpeg',
+    '/avatar/dracaufeu.jpeg',
+    '/avatar/evoli.jpeg',
+    '/avatar/gobou.jpeg',
+    '/avatar/metamorph.jpeg',
+    '/avatar/pika.jpeg',
+    '/avatar/psyko.jpeg'
+  ];
 
   selected_game_mode: string = "hasard";
   equipe_selectionnee: any = null;
@@ -46,7 +57,12 @@ export class HomeComponent implements OnInit {
         this.user.id = data.id; 
         this.user.pseudo = data.pseudo;
         this.user.team_color = data.team_color || 'red';
-                this.charger_mes_equipes();
+        
+        if (data.avatar_url) {
+          this.user.avatar = data.avatar_url;
+        }
+
+        this.charger_mes_equipes();
         
       } catch (err) {
         console.error("Erreur d'authentification ou non connecté :", err);
@@ -89,7 +105,8 @@ export class HomeComponent implements OnInit {
     try {
       await this.auth.updateProfile({
         pseudo: this.user.pseudo,
-        team_color: this.user.team_color
+        team_color: this.user.team_color,
+        avatar_url: this.user.avatar 
       });
       console.log("Profil mis à jour !");
     } catch (err) {
@@ -99,6 +116,17 @@ export class HomeComponent implements OnInit {
 
   changeColor() {
     this.user.team_color = this.user.team_color === 'red' ? 'blue' : 'red';
+  }
+
+  openAvatarModal() {
+    if (this.isEditing) {
+      this.isAvatarModalOpen = true;
+    }
+  }
+
+  selectAvatar(newAvatar: string) {
+    this.user.avatar = newAvatar;
+    this.isAvatarModalOpen = false;
   }
 
   choisir_mode(mode: string) {

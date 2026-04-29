@@ -74,13 +74,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       try {
         const data: any = await this.auth.getMe();
-        
+
         this.user = {
           id: data.id,
           pseudo: data.pseudo,
           team_color: data.team_color || 'red',
           score: data.aura || 0,
-          is_admin: data.is_admin === true, 
+          is_admin: data.is_admin === true,
           avatar: data.avatar_url || '/avatar/gobou.jpeg'
         };
 
@@ -92,7 +92,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.auth.logout();
         this.router.navigate(['/login']);
       }
-      
+
     }
   }
 
@@ -189,8 +189,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
     try {
-      const url = `http://localhost:8004/history/${this.user.pseudo}`; 
-      
+      const url = `http://localhost:8004/history/${this.user.pseudo}`;
+
       const response: any = await firstValueFrom(this.http.get(url));
       this.match_history = response;
     } catch (error) {
@@ -296,5 +296,19 @@ export class HomeComponent implements OnInit, OnDestroy {
         container.scrollTop = container.scrollHeight;
       }
     }, 50);
+  }
+
+  getTeamTextColor(pseudo: string): string {
+    const profile = this.user_profiles.find((user) => user.pseudo === pseudo);
+
+    if (profile?.team_color === 'blue') {
+      return 'text-blue-600';
+    }
+
+    if (profile?.team_color === 'red') {
+      return 'text-red-600';
+    }
+
+    return 'text-gray-800';
   }
 }

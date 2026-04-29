@@ -1,11 +1,3 @@
-<div class="max-w-7xl mx-auto flex justify-end">
-  <img
-    (click)="showLeaveWarning = true"
-    class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
-    src="/titre.png"
-    alt="Logo"
-  />
-</div>
 <div
   *ngIf="current_phase === 'waiting'"
   class="flex items-center justify-center h-screen bg-gray-200 -mb-4"
@@ -15,11 +7,17 @@
 
 <div
   *ngIf="current_phase !== 'waiting'"
-  class="duel-page min-h-screen"
+  class="duel-page min-h-screen relative"
   [ngClass]="team_color === 'red' ? 'bg-red-200' : 'bg-blue-200'"
 >
+  <img
+    (click)="showLeaveWarning = true"
+    class="absolute right-4 top-3 z-20 w-24 md:w-32 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
+    src="/titre.png"
+    alt="Logo"
+  />
   <div
-    class="timer-header bg-white p-4 text-center font-bold text-2xl shadow-md border-b-4 border-gray-300 flex justify-center gap-8"
+    class="timer-header bg-white py-3 px-4 text-center font-bold text-xl md:text-2xl shadow-md border-b-4 border-gray-300 flex justify-center gap-6"
   >
     <span *ngIf="current_phase === 'battle'" class="text-blue-600">TOUR {{ current_turn }}</span>
     <span *ngIf="current_phase === 'draft'" class="text-purple-600 uppercase tracking-widest"
@@ -28,7 +26,7 @@
     <span *ngIf="current_phase === 'battle'">Temps restant : {{ timer_left }}s</span>
   </div>
 
-  <div class="main-battle-area flex justify-between mt-8 px-8 h-[500px]">
+  <div class="main-battle-area flex justify-between mt-4 px-8 h-[500px]">
     <div class="sidebar w-32">
       <ng-container
         *ngTemplateOutlet="team_color === 'blue' ? mySidebar : oppSidebar"
@@ -170,7 +168,16 @@
       class="journal-messages h-40 overflow-y-auto p-4 text-sm flex flex-col gap-2"
     >
       <div *ngFor="let m of message_list" class="text-[15px] leading-snug">
-        <span class="font-bold text-blue-700">{{ m.user }} :</span>
+        <span
+          *ngIf="canOpenChatProfile(m.user); else plainJournalAuthor"
+          class="font-bold text-blue-700 cursor-pointer hover:underline"
+          (click)="openChatProfile(m.user)"
+        >
+          {{ m.user }} :
+        </span>
+        <ng-template #plainJournalAuthor>
+          <span class="font-bold text-blue-700">{{ m.user }} :</span>
+        </ng-template>
         <span class="whitespace-pre-line text-gray-800"> {{ m.text }}</span>
       </div>
     </div>
@@ -178,7 +185,11 @@
     <div *ngIf="active_chat_tab === 'chat'" class="p-4">
       <div class="player-chat-messages h-32 overflow-y-auto text-sm flex flex-col gap-1 pr-1">
         <div *ngFor="let m of chat_messages" class="text-[15px] leading-snug">
-          <span class="font-bold" [ngClass]="m.is_self ? 'text-blue-600' : 'text-red-600'">
+          <span
+            class="font-bold cursor-pointer hover:underline"
+            [ngClass]="m.is_self ? 'text-blue-600' : 'text-red-600'"
+            (click)="openChatProfile(m.user)"
+          >
             {{ m.user }} :
           </span>
           <span class="text-gray-800"> {{ m.text }}</span>
@@ -206,6 +217,36 @@
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<div
+  *ngIf="selected_chat_profile"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+  (click)="closeChatProfile()"
+>
+  <div
+    class="w-[320px] rounded-2xl bg-white p-6 shadow-2xl border-4 text-center"
+    [ngClass]="getProfileBorderClass(selected_chat_profile.team_color)"
+    (click)="$event.stopPropagation()"
+  >
+    <img
+      [src]="selected_chat_profile.avatar_url || '/avatar/gobou.jpeg'"
+      alt="Avatar"
+      class="mx-auto h-24 w-24 rounded-full object-cover border-4 shadow-md"
+      [ngClass]="getProfileAvatarBorderClass(selected_chat_profile.team_color)"
+    />
+    <div class="mt-4 text-2xl font-black text-[#311b5e]">{{ selected_chat_profile.pseudo }}</div>
+    <div class="mt-3 rounded-xl bg-gray-100 px-4 py-3">
+      <div class="text-xs font-bold uppercase text-gray-400">Points</div>
+      <div class="text-3xl font-black text-[#db5151]">{{ selected_chat_profile.aura ?? 0 }}</div>
+    </div>
+    <button
+      (click)="closeChatProfile()"
+      class="mt-5 rounded-xl bg-[#311b5e] px-5 py-2 font-bold text-white"
+    >
+      Fermer
+    </button>
   </div>
 </div>
 
@@ -303,14 +344,16 @@
 
 <ng-template #mySidebar>
   <div class="flex flex-col gap-3 h-full items-center">
-    <div
-      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight"
+    <button
+      type="button"
+      (click)="openChatProfile(user?.pseudo || 'Mon Équipe')"
+      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
       [ngClass]="
         team_color === 'red' ? 'border-red-500 text-red-600' : 'border-blue-500 text-blue-600'
       "
     >
       {{ user?.pseudo ? user.pseudo : 'Mon Équipe' }}
-    </div>
+    </button>
 
     <div *ngFor="let p of my_team" class="relative">
       <button
@@ -354,11 +397,16 @@
 
 <ng-template #oppSidebar>
   <div class="flex flex-col gap-3 h-full items-center">
-    <div
-      class="text-center font-black text-gray-700 bg-gray-200 rounded-lg py-2 border-2 border-gray-400 w-full shadow-sm break-words px-1 leading-tight"
+    <button
+      type="button"
+      (click)="openChatProfile(opponent_pseudo)"
+      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
+      [ngClass]="
+        team_color === 'red' ? 'border-blue-500 text-blue-600' : 'border-red-500 text-red-600'
+      "
     >
       {{ opponent_pseudo }}
-    </div>
+    </button>
 
     <div
       *ngFor="let p of opponent_team"

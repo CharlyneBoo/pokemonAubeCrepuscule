@@ -98,6 +98,15 @@ def load_history(match_id: str, limit: int = 100) -> list[dict]:
         db.close()
 
 
+def clear_history(match_id: str):
+    db = SessionLocal()
+    try:
+        db.query(ChatMessage).filter(ChatMessage.match_id == match_id).delete()
+        db.commit()
+    finally:
+        db.close()
+
+
 async def consume_journal_loop():
     delay = 1
     while True:
@@ -114,6 +123,13 @@ async def consume_journal_loop():
             async for message in consumer:
                 payload = json.loads(message.value.decode("utf-8"))
                 kind = payload.get("kind")
+                if kind == "chat_reset":
+                    match_id = payload.get("match_id")
+                    if match_id:
+                        clear_history(match_id)
+                        await manager.broadcast(match_id, {"kind": "chat_cleared"})
+                    continue
+
                 if kind not in ("turn_result", "chat_system"):
                     continue
 

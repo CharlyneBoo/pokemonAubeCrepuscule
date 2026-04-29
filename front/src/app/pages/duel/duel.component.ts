@@ -3,7 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Auth } from '../../services/auth'; 
+import { Auth, UserOut } from '../../services/auth';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -51,9 +51,12 @@ export class DuelComponent implements OnInit, OnDestroy {
   chat_input: string = '';
   match_result: 'win' | 'loss' | 'draw' | null = null;
   winner_name: string = ''; 
+  user_profiles: UserOut[] = [];
+  selected_chat_profile: { pseudo: string; avatar_url?: string; aura?: number; team_color?: string } | null = null;
   
   socket: WebSocket | null = null;
   chat_socket: WebSocket | null = null;
+  private journal_message_keys = new Set<string>();
 
   constructor(
     private http: HttpClient, private auth: Auth,
@@ -68,8 +71,9 @@ export class DuelComponent implements OnInit, OnDestroy {
     });
 
     if (isPlatformBrowser(this.platform_id)) {
-     try {
+      try {
         this.user = await this.auth.getMe();
+        await this.load_user_profiles();
         if (this.user.team_color === 'rouge') this.team_color = 'red';
         else if (this.user.team_color === 'bleu') this.team_color = 'blue';
         else this.team_color = this.user.team_color;
@@ -79,10 +83,25 @@ export class DuelComponent implements OnInit, OnDestroy {
     }
   }
 
+  async load_user_profiles() {
+    try {
+      this.user_profiles = await this.auth.getUsers();
+    } catch (error) {
+      console.error('Erreur chargement profils utilisateurs :', error);
+      this.user_profiles = [];
+    }
+  }
+
   ngOnDestroy() {
     if (this.timer_interval) clearInterval(this.timer_interval);
-    if (this.socket) this.socket.close();
-    if (this.chat_socket) this.chat_socket.close();
+    if (this.socket) {
+      this.socket.onmessage = null;
+      this.socket.close();
+    }
+    if (this.chat_socket) {
+      this.chat_socket.onmessage = null;
+      this.chat_socket.close();
+    }
   }
 
   action_draft_pick(pokemon_id: number) {
@@ -220,6 +239,7 @@ export class DuelComponent implements OnInit, OnDestroy {
       if (data.kind === 'match_start') {
         this.current_phase = 'battle';
         this.is_waiting_for_opponent = false;
+        this.chat_messages = [];
         await this.build_battle_teams(data);
         this.start_timer();
         this.add_bot_message(data.message);
@@ -276,26 +296,28 @@ export class DuelComponent implements OnInit, OnDestroy {
       const data = JSON.parse(event.data);
 
       if (data.kind === 'chat_history' && Array.isArray(data.entries)) {
-        this.message_list = data.entries
-          .filter((entry: any) => entry.channel === 'journal')
+        this.message_list = [];
+        this.journal_message_keys.clear();
+        this.chat_messages = data.entries
+          .filter((entry: any) => entry.channel === 'chat')
           .map((entry: any) => ({
             user: entry.user,
             text: entry.text,
-            is_bot: true,
+            is_self: entry.player === this.team_color,
           }));
-        this.chat_messages = [];
         this.scroll_chat_panel('journal');
         this.scroll_chat_panel('chat');
         return;
       }
 
+      if (data.kind === 'chat_cleared') {
+        this.chat_messages = [];
+        this.scroll_chat_panel('chat');
+        return;
+      }
+
       if (data.kind === 'journal_message' && data.entry) {
-        this.message_list.push({
-          user: data.entry.user,
-          text: data.entry.text,
-          is_bot: true,
-        });
-        this.scroll_chat_panel('journal');
+        this.add_journal_message(data.entry.user || this.BOT_NAME, data.entry.text, true);
         return;
       }
 
@@ -445,7 +467,14 @@ export class DuelComponent implements OnInit, OnDestroy {
   }
 
   add_bot_message(texte: string) {
-    this.message_list.push({ user: this.BOT_NAME, text: texte, is_bot: true });
+    this.add_journal_message(this.BOT_NAME, texte, true);
+  }
+
+  add_journal_message(user: string, text: string, is_bot: boolean = false) {
+    const key = `${user}:${text}`;
+    if (is_bot && this.journal_message_keys.has(key)) return;
+    this.journal_message_keys.add(key);
+    this.message_list.push({ user, text, is_bot });
     this.scroll_chat_panel('journal');
   }
 
@@ -460,6 +489,49 @@ export class DuelComponent implements OnInit, OnDestroy {
       message,
     }));
     this.chat_input = '';
+  }
+
+  openChatProfile(pseudo: string) {
+    if (!this.canOpenChatProfile(pseudo)) return;
+
+    const profile = this.user_profiles.find((user) => user.pseudo === pseudo);
+    const is_current_user = this.user?.pseudo === pseudo;
+    this.selected_chat_profile = {
+      pseudo,
+      avatar_url: profile?.avatar_url || (is_current_user ? this.user?.avatar_url : undefined) || '/avatar/gobou.jpeg',
+      aura: profile?.aura ?? (is_current_user ? this.user?.aura : 0) ?? 0,
+      team_color: this.normalizeTeamColor(profile?.team_color || (is_current_user ? this.user?.team_color : undefined)),
+    };
+  }
+
+  closeChatProfile() {
+    this.selected_chat_profile = null;
+  }
+
+  canOpenChatProfile(pseudo: string): boolean {
+    return !!pseudo && pseudo !== this.BOT_NAME;
+  }
+
+  getProfileBorderClass(team_color?: string): string {
+    return this.normalizeTeamColor(team_color) === 'blue'
+      ? 'border-[#6a4cef]'
+      : this.normalizeTeamColor(team_color) === 'red'
+        ? 'border-[#db5151]'
+        : 'border-[#311b5e]';
+  }
+
+  getProfileAvatarBorderClass(team_color?: string): string {
+    return this.normalizeTeamColor(team_color) === 'blue'
+      ? 'border-blue-200'
+      : this.normalizeTeamColor(team_color) === 'red'
+        ? 'border-red-200'
+        : 'border-pink-200';
+  }
+
+  private normalizeTeamColor(team_color?: string): string {
+    if (team_color === 'bleu') return 'blue';
+    if (team_color === 'rouge') return 'red';
+    return team_color || '';
   }
 
   select_chat_tab(tab: 'journal' | 'chat') {

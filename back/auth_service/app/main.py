@@ -45,8 +45,6 @@ async def lifespan(app: FastAPI):
         db.rollback()
     finally:
         db.close()
-    # -------------------------------------
-
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
     await producer.start()
         

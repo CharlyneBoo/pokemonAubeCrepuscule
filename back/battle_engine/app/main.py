@@ -31,8 +31,10 @@ class ConnectionManager:
         # Equipes du mode consruit 
         self.construit_teams: dict[str, dict] = {}
         
+        # Pseudo des players
         self.player_pseudos: dict[str, dict] = {} 
 
+    # Accepte la connexion WebSocket d'un joueur. Si 2 joueurs sont là, initialise le match selon le mode (hasard, draft, construit)
     async def connect(self, websocket: WebSocket, match_id: str, mode: str):
         await websocket.accept()
         if match_id not in self.active_connections:
@@ -53,11 +55,6 @@ class ConnectionManager:
                         "red_active_index": donnees["red_active_index"], "blue_active_index": donnees["blue_active_index"]
                     }
                 await self.broadcast_to_match(message_depart, match_id)
-                if producer:
-                    await producer.send_and_wait("system.logs", json.dumps({
-                        "service": "BattleEngine",
-                        "message": f"Nouveau match lancé (ID: {match_id}, Mode: {mode})"
-                    }).encode("utf-8"))
             elif mode == "draft":
                 async with httpx.AsyncClient() as client:
                     reponse = await client.get("http://duel-service:8000/generate-random-teams")
@@ -73,13 +70,16 @@ class ConnectionManager:
                     "service": "BattleEngine",
                     "message": f"Nouveau match lancé (ID: {match_id}, Mode: {mode})"
                 }).encode("utf-8"))
+                
+    # Retire un joueur déconnecté      
     def disconnect(self, websocket: WebSocket, match_id: str):
         if match_id in self.active_connections:
             self.active_connections[match_id].remove(websocket)
             if not self.active_connections[match_id]:
                 self.active_connections.pop(match_id, None)
                 self.player_presence.pop(match_id, None)
-
+                
+    # Envoie un message JSON à tous les joueurs 
     async def broadcast_to_match(self, message: dict, match_id: str):
         if match_id in self.active_connections:
             for connection in self.active_connections[match_id]:
@@ -101,6 +101,7 @@ class ConnectionManager:
                 match_id,
             )
 
+    # Envoie l'état actuel de la draft aux deux joueurs.
     async def broadcast_draft_state(self, match_id: str):
         state = self.draft_states[match_id]
         msg = {
@@ -185,6 +186,7 @@ match_logs_memory: dict[str, list[dict]] = {}
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
+# Formate le résultat d'un tour, l'envoie dans Kafka et l'affiche aux joueurs via WebSocket.
 async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_choice: dict, resultat_duel: dict):
     global producer
     assert producer is not None
@@ -220,6 +222,7 @@ async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_c
     await ws_manager.broadcast_to_match(result, match_id)
     print("[BattleEngine] turn_result publié:", result, flush=True)
 
+# Boucle de fond qui écoute les actions des joueurs sur Kafka.
 async def consume_commands_loop():
     consumer = AIOKafkaConsumer(
         COMMANDS_TOPIC,
@@ -290,7 +293,8 @@ async def consume_commands_loop():
     finally:
         await consumer.stop()
         
-        
+
+# Compile toutes les données de fin de partie et les envoie à Kafka pour être sauvegardées en BDD par le Duel Service.
 async def save_match_to_history(match_id, red_id, blue_id, winner, mode, logs):
     """
     Envoie l'archive complète du match dans Kafka pour qu'elle soit sauvegardée

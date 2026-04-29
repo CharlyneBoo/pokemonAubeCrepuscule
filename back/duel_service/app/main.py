@@ -15,6 +15,7 @@ from .logic import calculate_advantages
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 
+# Boucle de fond écoutant Kafka
 async def consume_history_loop():
     consumer = AIOKafkaConsumer(
         "match.history",
@@ -47,6 +48,8 @@ async def consume_history_loop():
     finally:
         await consumer.stop()
 
+# Gestionnaire du cycle de vie de l'API 
+# Au démarrage, il crée la table SQL de l'historique et lance Kafka.
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Création de la table historique si elle n'existe pas

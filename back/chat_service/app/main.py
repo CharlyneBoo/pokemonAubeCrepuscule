@@ -20,10 +20,12 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: dict[str, list[WebSocket]] = {}
 
+    # Accepte une nouvelle connexion WebSocket
     async def connect(self, websocket: WebSocket, match_id: str):
         await websocket.accept()
         self.active_connections.setdefault(match_id, []).append(websocket)
 
+    # Retire une connexion WebSocket
     def disconnect(self, websocket: WebSocket, match_id: str):
         if match_id not in self.active_connections:
             return
@@ -33,6 +35,7 @@ class ConnectionManager:
         if not self.active_connections[match_id]:
             self.active_connections.pop(match_id, None)
 
+    # Diffuse un message JSON à tous les utilisateurs 
     async def broadcast(self, match_id: str, payload: dict):
         if match_id not in self.active_connections:
             return
@@ -49,6 +52,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+# Transforme un objet ChatMessage en propre pour le frontend
 def serialize_entry(entry: ChatMessage) -> dict:
     created_at = entry.created_at
     if isinstance(created_at, datetime):
@@ -64,6 +68,7 @@ def serialize_entry(entry: ChatMessage) -> dict:
     }
 
 
+# Crée un nouveau message et le sauvegarde dans la bDD
 def save_message(match_id: str, channel: str, author: str, content: str, player: str | None = None) -> dict:
     db = SessionLocal()
     try:
@@ -81,7 +86,7 @@ def save_message(match_id: str, channel: str, author: str, content: str, player:
     finally:
         db.close()
 
-
+# Récupère les 100 derniers messages d'un salon depuis la bDD
 def load_history(match_id: str, limit: int = 100) -> list[dict]:
     db = SessionLocal()
     try:

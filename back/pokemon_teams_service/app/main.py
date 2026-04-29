@@ -17,6 +17,7 @@ from .schema import UpdateTeamModel
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 producer: AIOKafkaProducer = None
 
+# Gestionnaire du cycle de vie de l'API
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global producer

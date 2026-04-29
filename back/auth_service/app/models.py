@@ -6,7 +6,6 @@ from .database import Base
 class User(Base):
     __tablename__ = "users"
     
-    # UUID stocké comme texte
     id = Column(CHAR(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     
     email = Column(String(255), unique=True, nullable=False)
@@ -26,8 +25,6 @@ class PokemonTeam(Base):
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nom = Column(String(100), nullable=False)
-    
-    # Clé étrangère
     user_id = Column(CHAR(36), ForeignKey("users.id"), nullable=False)
     
     # Les 6 emplacements de Pokémon (Integer = ID du pokemon, nullable=True si vide)

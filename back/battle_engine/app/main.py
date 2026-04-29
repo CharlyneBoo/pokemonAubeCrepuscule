@@ -68,7 +68,11 @@ class ConnectionManager:
                         "pool": pool_ids, "red_team": [], "blue_team": [], "turn": "red"
                     }
                     await self.broadcast_draft_state(match_id)
-            
+            if producer:
+                await producer.send_and_wait("system.logs", json.dumps({
+                    "service": "BattleEngine",
+                    "message": f"Nouveau match lancé (ID: {match_id}, Mode: {mode})"
+                }).encode("utf-8"))
     def disconnect(self, websocket: WebSocket, match_id: str):
         if match_id in self.active_connections:
             self.active_connections[match_id].remove(websocket)
@@ -176,6 +180,7 @@ CHAT_GLOBAL_TOPIC = "chat.global"
 
 producer: AIOKafkaProducer | None = None
 pending: dict[tuple[str, int], dict[str, dict]] = {}
+match_logs_memory: dict[str, list[dict]] = {}
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -203,7 +208,8 @@ async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_c
             "switch_to": blue_choice.get("switch_to"),
         },
         "duel_result": resultat_duel,
-"message": resultat_duel.get("message")    }
+        "message": resultat_duel.get("message")    
+    }
 
     await producer.send_and_wait(
         CHAT_GLOBAL_TOPIC,
@@ -266,9 +272,16 @@ async def consume_commands_loop():
                     try:
                         reponse = await client.post("http://duel-service:8000/resolve", json=duel_payload)
                         resultat_duel = reponse.json()
+                        print(f"🕵️‍♂️ RÉSULTAT DUEL REÇU : {resultat_duel}", flush=True)
                     except Exception as e:
                         print("Erreur de connexion au Service Duel:", e)
                         resultat_duel = {"winner": "error"}
+                
+                tour_msg = resultat_duel.get("message", f"Fin du tour {turn}")
+
+                match_logs_memory.setdefault(match_id, [])
+                match_logs_memory[match_id].append({"tour": int(turn), "message": tour_msg})
+                # -------------------------------------------------
 
                 await publish_turn_result(match_id, int(turn), red_choice, blue_choice, resultat_duel)
 
@@ -363,13 +376,16 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
                 else:
                     winner_pseudo = "Égalité"
 
+                # On récupère et vide les logs accumulés pendant la partie
+                logs_de_la_partie = match_logs_memory.pop(match_id, [])
+
                 await save_match_to_history(
                     match_id=match_id,
                     red_id=red_pseudo,
                     blue_id=blue_pseudo,
                     winner=winner_pseudo,
                     mode=mode,
-                    logs=[] 
+                    logs=logs_de_la_partie 
                 )
 
             elif data.get("kind") == "forfeit":
@@ -389,13 +405,17 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
                 blue_pseudo = pseudos.get("blue", "Joueur Bleu")
                 winner_pseudo = red_pseudo if winner_color == "red" else blue_pseudo
                 
+                # On récupère et vide les logs, et on ajoute un message d'abandon
+                logs_de_la_partie = match_logs_memory.pop(match_id, [])
+                logs_de_la_partie.append({"tour": "Fin", "message": f"🚩 Le joueur {loser_color} a abandonné."})
+                
                 await save_match_to_history(
                     match_id=match_id,
                     red_id=red_pseudo,
                     blue_id=blue_pseudo,
                     winner=winner_pseudo,
                     mode=mode,
-                    logs=[] 
+                    logs=logs_de_la_partie 
                 )
 
             elif data.get("kind") == "draft_pick":

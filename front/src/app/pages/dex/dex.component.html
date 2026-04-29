@@ -1,106 +1,69 @@
 <div class="max-w-7xl mx-auto flex justify-end">
-  <img
-    (click)="naviguer('/home')"
-    class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
-    src="/titre.png"
-    alt="Logo"
-  />
+  <img (click)="naviguer('/home')"
+    class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity cursor-pointer" src="/titre.png"
+    alt="Logo" />
 </div>
-<div
-  class="min-h-screen p-8 font-sans bg-cover bg-center bg-fixed transition-all duration-500"
-  [style.background-image]="user.team_color === 'red' ? 'url(/redfond.png)' : 'url(/bluefond.png)'"
->
+<div class="min-h-screen p-8 font-sans bg-cover bg-center bg-fixed transition-all duration-500"
+  [style.background-image]="user.team_color === 'red' ? 'url(/redfond.png)' : 'url(/bluefond.png)'">
   <div class="flex justify-center mb-16 mt-4 relative z-50">
-    <div
-      class="text-white rounded-2xl flex items-center gap-8 px-4 py-3 shadow-2xl bg-gradient-to-b"
-      [ngClass]="
+    <div class="text-white rounded-2xl flex items-center gap-8 px-4 py-3 shadow-2xl bg-gradient-to-b" [ngClass]="
         user.team_color === 'red' ? 'from-[#db5151] to-[#522761]' : 'from-[#90a5ff] to-[#522761]'
-      "
-    >
+      ">
       <div class="flex items-center gap-3 pl-2">
-        <div
-          class="w-8 h-8 bg-white rounded-full relative overflow-hidden flex items-center justify-center"
-        >
-          <img
-            class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
-            src="favicon.ico"
-            alt="Logo"
-          />
+        <div class="w-8 h-8 bg-white rounded-full relative overflow-hidden flex items-center justify-center">
+          <img class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
+            src="favicon.ico" alt="Logo" />
         </div>
         <span class="font-bold text-xl tracking-wide">Pokemon</span>
       </div>
 
-      <input
-        type="text"
-        [(ngModel)]="searchNom"
-        placeholder="Nom anglais"
-        class="bg-white/20 text-center text-white placeholder-white italic outline-none w-32 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]"
-      />
-      <input
-        type="text"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        [(ngModel)]="searchId"
-        placeholder="N°"
-        class="bg-white/20 text-center text-white placeholder-white italic outline-none w-16 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]"
-      />
-      <input
-        type="text"
-        [(ngModel)]="searchType1"
-        placeholder="Type 1"
-        class="bg-white/20 text-center text-white placeholder-white italic outline-none w-24 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]"
-      />
-      <input
-        type="text"
-        [(ngModel)]="searchType2"
-        placeholder="Type 2"
-        class="bg-white/20 text-center text-[#522761] placeholder-white italic outline-none w-24 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]"
-      />
+      <input type="text" [(ngModel)]="searchNom" placeholder="Nom anglais"
+        class="bg-white/20 text-center text-white placeholder-white italic outline-none w-32 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]" />
+      <input type="text" inputmode="numeric" pattern="[0-9]*" [(ngModel)]="searchId" placeholder="N°"
+        class="bg-white/20 text-center text-white placeholder-white italic outline-none w-16 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]" />
+      <input type="text" [(ngModel)]="searchType1" placeholder="Type 1"
+        class="bg-white/20 text-center text-white placeholder-white italic outline-none w-24 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]" />
+      <input type="text" [(ngModel)]="searchType2" placeholder="Type 2"
+        class="bg-white/20 text-center text-[#522761] placeholder-white italic outline-none w-24 px-3 py-1 rounded-md text-sm font-medium border border-[#522761]" />
 
-      <button
-        (click)="lancerRecherche(true)"
-        class="bg-white text-black font-bold text-sm px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors shadow-inner"
-      >
+      <button (click)="lancerRecherche(true)"
+        class="bg-white text-black font-bold text-sm px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors shadow-inner">
         Rechercher
       </button>
     </div>
   </div>
 
-  <div
-    class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 justify-items-center"
-  >
-    <div
-      *ngFor="let pokemon of pokemons"
-      class="w-[320px] h-[400px] [perspective:1000px] cursor-pointer group"
-      (click)="toggleFlip(pokemon)"
-    >
-      <div
-        class="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]"
-        [ngClass]="{ '[transform:rotateY(180deg)]': pokemon.isFlipped }"
-      >
+  <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 justify-items-center">
+    <div *ngFor="let pokemon of pokemons" class="w-[320px] h-[400px] [perspective:1000px] cursor-pointer group"
+      (click)="toggleFlip(pokemon)">
+      <div class="relative w-full h-full transition-transform duration-700 [transform-style:preserve-3d]"
+        [ngClass]="{ '[transform:rotateY(180deg)]': pokemon.isFlipped }">
+        
         <div
           class="absolute w-full h-full rounded-2xl shadow-lg flex flex-col items-center justify-between p-6 border-4 border-white"
-          style="backface-visibility: hidden; -webkit-backface-visibility: hidden"
-          [ngClass]="{
+          style="backface-visibility: hidden; -webkit-backface-visibility: hidden; transform: translateZ(1px);" [ngClass]="{
+            'bg-[#e0e0e0]': pokemon.types[0] === 'normal',
             'bg-[#ffcdd2]': pokemon.types[0] === 'fire',
-            'bg-[#bbdefb]': pokemon.types[0] === 'water' || pokemon.types[0] === 'ice',
-            'bg-[#c8e6c9]': pokemon.types[0] === 'grass' || pokemon.types[0] === 'bug',
+            'bg-[#bbdefb]': pokemon.types[0] === 'water',
+            'bg-[#c8e6c9]': pokemon.types[0] === 'grass',
             'bg-[#fff9c4]': pokemon.types[0] === 'electric',
-            'bg-[#e1bee7]': pokemon.types[0] === 'poison' || pokemon.types[0] === 'psychic',
-            'bg-[#d7ccc8]': pokemon.types[0] === 'ground' || pokemon.types[0] === 'rock',
-            'bg-[#f8bbd0]': pokemon.types[0] === 'fairy',
+            'bg-[#e0f7fa]': pokemon.types[0] === 'ice',
             'bg-[#ffccbc]': pokemon.types[0] === 'fighting',
-            'bg-[#cfd8dc]':
-              pokemon.types[0] === 'normal' ||
-              pokemon.types[0] === 'flying' ||
-              pokemon.types[0] === 'steel',
-            'bg-[#b39ddb]': pokemon.types[0] === 'dragon' || pokemon.types[0] === 'ghost',
+            'bg-[#e1bee7]': pokemon.types[0] === 'poison',
+            'bg-[#d7ccc8]': pokemon.types[0] === 'ground',
+            'bg-[#e3f2fd]': pokemon.types[0] === 'flying',
+            'bg-[#f8bbd0]': pokemon.types[0] === 'psychic',
+            'bg-[#dcedc8]': pokemon.types[0] === 'bug',
+            'bg-[#bcaaa4]': pokemon.types[0] === 'rock',
+            'bg-[#b39ddb]': pokemon.types[0] === 'ghost',
+            'bg-[#c5cae9]': pokemon.types[0] === 'dragon',
             'bg-[#9e9e9e]': pokemon.types[0] === 'dark',
-          }"
-        >
-          <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
-            <div
-              *ngFor="let type of pokemon.types"
+            'bg-[#b0bec5]': pokemon.types[0] === 'steel',
+            'bg-[#fce4ec]': pokemon.types[0] === 'fairy'
+          }">
+          
+          <div class="absolute top-3 left-3 flex flex-col gap-1.5" style="transform: translateZ(2px);">
+            <div *ngFor="let type of pokemon.types"
               class="w-9 h-9 rounded-full p-1.5 shadow-md border-2 border-white/80 flex items-center justify-center"
               [ngClass]="{
                 'bg-[#EE8130]': type === 'fire',
@@ -120,35 +83,25 @@
                 'bg-[#96D9D6]': type === 'ice',
                 'bg-[#6F35FC]': type === 'dragon',
                 'bg-[#705746]': type === 'dark',
-                'bg-[#B7B7CE]': type === 'steel',
-              }"
-            >
-              <img
-                [src]="
+                'bg-[#B7B7CE]': type === 'steel'
+              }">
+              <img [src]="
                   'https://raw.githubusercontent.com/duiker101/pokemon-type-svg-icons/master/icons/' +
                   type +
                   '.svg'
-                "
-                [alt]="type"
-                class="w-full h-full drop-shadow-sm"
-              />
+                " [alt]="type" class="w-full h-full drop-shadow-sm" />
             </div>
           </div>
 
-          <img
-            [src]="pokemon.image"
-            alt="{{ pokemon.nom }}"
-            class="w-56 h-56 object-contain drop-shadow-xl -mt-2"
-          />
-          <h3 class="text-[1.35rem] font-medium text-black mt-1 capitalize">
+          <img [src]="pokemon.image" alt="{{ pokemon.nom }}" class="w-56 h-56 object-contain drop-shadow-xl -mt-2" style="transform: translateZ(5px);" />
+          <h3 class="text-[1.35rem] font-medium text-black mt-1 capitalize" style="transform: translateZ(2px);">
             {{ pokemon.nom }} N: {{ pokemon.id | number: '3.0-0' }}
           </h3>
 
-          <button
-            (click)="ouvrirAjout(pokemon.id); $event.stopPropagation()"
+          <button (click)="ouvrirAjout(pokemon.id); $event.stopPropagation()"
             class="mt-4 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors flex items-center gap-2"
-            [ngClass]="user.team_color === 'red' ? 'bg-[#ff7171]' : 'bg-[#90a5ff]'"
-          >
+            style="transform: translateZ(2px);"
+            [ngClass]="user.team_color === 'red' ? 'bg-[#ff7171] hover:bg-[#db5151]' : 'bg-[#90a5ff] hover:bg-[#6a4cef]'">
             <span>+</span> Ajouter à une équipe
           </button>
         </div>
@@ -158,39 +111,36 @@
           style="
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
-            transform: rotateY(180deg);
-          "
-          [ngClass]="{
+            transform: rotateY(180deg) translateZ(1px);
+          " [ngClass]="{
+            'bg-[#e0e0e0]': pokemon.types[0] === 'normal',
             'bg-[#ffcdd2]': pokemon.types[0] === 'fire',
-            'bg-[#bbdefb]': pokemon.types[0] === 'water' || pokemon.types[0] === 'ice',
-            'bg-[#c8e6c9]': pokemon.types[0] === 'grass' || pokemon.types[0] === 'bug',
+            'bg-[#bbdefb]': pokemon.types[0] === 'water',
+            'bg-[#c8e6c9]': pokemon.types[0] === 'grass',
             'bg-[#fff9c4]': pokemon.types[0] === 'electric',
-            'bg-[#e1bee7]': pokemon.types[0] === 'poison' || pokemon.types[0] === 'psychic',
-            'bg-[#d7ccc8]': pokemon.types[0] === 'ground' || pokemon.types[0] === 'rock',
-            'bg-[#f8bbd0]': pokemon.types[0] === 'fairy',
+            'bg-[#e0f7fa]': pokemon.types[0] === 'ice',
             'bg-[#ffccbc]': pokemon.types[0] === 'fighting',
-            'bg-[#cfd8dc]':
-              pokemon.types[0] === 'normal' ||
-              pokemon.types[0] === 'flying' ||
-              pokemon.types[0] === 'steel',
-            'bg-[#b39ddb]': pokemon.types[0] === 'dragon' || pokemon.types[0] === 'ghost',
+            'bg-[#e1bee7]': pokemon.types[0] === 'poison',
+            'bg-[#d7ccc8]': pokemon.types[0] === 'ground',
+            'bg-[#e3f2fd]': pokemon.types[0] === 'flying',
+            'bg-[#f8bbd0]': pokemon.types[0] === 'psychic',
+            'bg-[#dcedc8]': pokemon.types[0] === 'bug',
+            'bg-[#bcaaa4]': pokemon.types[0] === 'rock',
+            'bg-[#b39ddb]': pokemon.types[0] === 'ghost',
+            'bg-[#c5cae9]': pokemon.types[0] === 'dragon',
             'bg-[#9e9e9e]': pokemon.types[0] === 'dark',
-          }"
-        >
-          <img
-            [src]="pokemon.image"
-            class="absolute inset-0 m-auto w-full h-full object-contain opacity-10 pointer-events-none z-0"
-          />
+            'bg-[#b0bec5]': pokemon.types[0] === 'steel',
+            'bg-[#fce4ec]': pokemon.types[0] === 'fairy'
+          }">
+          <img [src]="pokemon.image"
+            class="absolute inset-0 m-auto w-full h-full object-contain opacity-10 pointer-events-none z-0" />
 
           <div class="flex justify-between items-start w-full z-10 mt-2 relative">
-            <div
-              class="flex flex-col text-black text-[0.95rem] leading-tight w-[55%] pr-2 space-y-1.5"
-            >
+            <div class="flex flex-col text-black text-[0.95rem] leading-tight w-[55%] pr-2 space-y-1.5">
               <div class="flex items-center gap-2 mb-2">
                 <h4 class="font-bold text-xl capitalize">{{ pokemon.nom }}</h4>
                 <div class="flex gap-1">
-                  <div
-                    *ngFor="let type of pokemon.types"
+                  <div *ngFor="let type of pokemon.types"
                     class="w-5 h-5 rounded-full p-0.5 shadow-sm border border-white/80 flex items-center justify-center"
                     [ngClass]="{
                       'bg-[#EE8130]': type === 'fire',
@@ -210,18 +160,13 @@
                       'bg-[#96D9D6]': type === 'ice',
                       'bg-[#6F35FC]': type === 'dragon',
                       'bg-[#705746]': type === 'dark',
-                      'bg-[#B7B7CE]': type === 'steel',
-                    }"
-                  >
-                    <img
-                      [src]="
+                      'bg-[#B7B7CE]': type === 'steel'
+                    }">
+                    <img [src]="
                         'https://raw.githubusercontent.com/duiker101/pokemon-type-svg-icons/master/icons/' +
                         type +
                         '.svg'
-                      "
-                      [alt]="type"
-                      class="w-full h-full"
-                    />
+                      " [alt]="type" class="w-full h-full" />
                   </div>
                 </div>
               </div>
@@ -256,18 +201,15 @@
             </div>
           </div>
 
-          <div
-            class="text-[0.85rem] font-medium text-black leading-snug mt-auto mb-6 z-10 text-center px-2"
-          >
+          <div class="text-[0.85rem] font-medium text-black leading-snug mt-auto mb-6 z-10 text-center px-2">
             {{ pokemon.description }}
           </div>
 
           <div class="flex justify-center z-10 active:scale-95 transition-transform">
-            <button
-              class="bg-[#e53935] text-white px-6 py-2 rounded-lg font-bold text-sm shadow-md"
-              (click)="ouvrirAjout(pokemon.id); $event.stopPropagation()"
-            >
-              Add to Team
+            <button (click)="ouvrirAjout(pokemon.id); $event.stopPropagation()"
+              class="text-white font-bold py-2 px-4 rounded-lg shadow transition-colors flex items-center gap-2"
+              [ngClass]="user.team_color === 'red' ? 'bg-[#ff7171] hover:bg-[#db5151]' : 'bg-[#90a5ff] hover:bg-[#6a4cef]'">
+              <span>+</span> Ajouter à une équipe
             </button>
           </div>
         </div>
@@ -275,18 +217,14 @@
     </div>
 
     <div *ngIf="pokemons.length >= 50" class="col-span-full mt-10 mb-8 z-20 flex justify-center">
-      <button
-        (click)="chargerPlus()"
-        class="bg-black text-white font-bold text-lg px-8 py-3 rounded-xl hover:bg-gray-800 transition-colors shadow-2xl active:scale-95 transition-transform"
-      >
+      <button (click)="chargerPlus()"
+        class="bg-black text-white font-bold text-lg px-8 py-3 rounded-xl hover:bg-gray-800 transition-colors shadow-2xl active:scale-95 transition-transform">
         Charger plus de Pokémons
       </button>
     </div>
   </div>
-  <div
-    *ngIf="showAjout"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-  >
+  
+  <div *ngIf="showAjout" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
       <div class="bg-red-600 p-4 flex justify-between items-center">
         <h3 class="text-xl font-bold text-white">Choisir une équipe</h3>
@@ -298,20 +236,14 @@
       <div class="p-6">
         <p class="text-gray-600 mb-4 font-medium">À quelle équipe veux-tu ajouter ce Pokémon ?</p>
 
-        <div
-          *ngIf="teamsDisponibles.length === 0"
-          class="text-center text-red-500 font-bold p-4 bg-red-50 rounded-lg"
-        >
+        <div *ngIf="teamsDisponibles.length === 0" class="text-center text-red-500 font-bold p-4 bg-red-50 rounded-lg">
           Toutes tes équipes sont pleines (ou tu n'en as pas) ! Va dans "Mes Équipes" pour faire de
           la place.
         </div>
 
         <div class="space-y-3 max-h-60 overflow-y-auto">
-          <button
-            *ngFor="let team of teamsDisponibles"
-            (click)="ajouterAEquipe(team)"
-            class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-red-100 hover:border-red-400 border border-transparent rounded-lg font-bold text-gray-800 transition-all flex justify-between items-center group"
-          >
+          <button *ngFor="let team of teamsDisponibles" (click)="ajouterAEquipe(team)"
+            class="w-full text-left px-4 py-3 bg-gray-100 hover:bg-red-100 hover:border-red-400 border border-transparent rounded-lg font-bold text-gray-800 transition-all flex justify-between items-center group">
             <span>{{ team.nom }}</span>
             <span class="text-xs bg-gray-300 group-hover:bg-red-200 px-2 py-1 rounded-full">
               {{ team.pokemons.length }}/6

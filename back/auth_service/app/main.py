@@ -3,15 +3,15 @@ import json
 import asyncio
 from typing import List
 from contextlib import asynccontextmanager
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
+from aiokafka import AIOKafkaProducer
 
-from .database import Base, engine, get_db
-from .models import User, MatchHistory
+from .database import Base, SessionLocal, engine, get_db
+from .models import User  # MatchHistory a été supprimé d'ici !
 from .schema import UserCreate, UserLogin, UserOut, Token, UserUpdate
 from .auth import hash_password, verify_password, create_token, decode_token
 
@@ -20,51 +20,39 @@ KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 producer: AIOKafkaProducer = None
 security = HTTPBearer()
 
-async def consume_history_loop():
-    consumer = AIOKafkaConsumer(
-        "match.history", # On écoute le topic de l'historique
-        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-        group_id="history-saver",
-        auto_offset_reset="latest"
-    )
-    await consumer.start()
-    print("[Auth Service] En écoute de l'historique des matchs...")
-    
-    try:
-        async for msg in consumer:
-            data = json.loads(msg.value.decode("utf-8"))
-            if data.get("kind") == "match_finished":
-                db = next(get_db()) # On ouvre une session BDD
-                
-                # On sauvegarde en base de données
-                new_history = MatchHistory(
-                    match_uuid=data.get("match_uuid", "inconnu"),
-                    player_red_id=data.get("player_red", "inconnu"),
-                    player_blue_id=data.get("player_blue", "inconnu"),
-                    winner_id=data.get("winner"),
-                    game_mode=data.get("game_mode", "inconnu"),
-                    match_logs=data.get("match_logs", [])
-                )
-                db.add(new_history)
-                db.commit()
-                print(f"[Auth Service] Historique sauvegardé : {data.get('match_uuid')}")
-    except Exception as e:
-        print(f"Erreur Consumer Historique : {e}")
-    finally:
-        await consumer.stop()
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global producer
     Base.metadata.create_all(bind=engine)
+    
+    db = SessionLocal()
+    try:
+        admin = db.query(User).filter(User.pseudo == "admin").first()
+        if not admin:
+            new_admin = User(
+                name="Admin",             
+                first_name="Admin",       
+                pseudo="admin",
+                email="admin@pokemon.com",
+                hashed_password=hash_password("admin"),
+                team_color="red",
+                is_admin=True       
+            )
+            db.add(new_admin)
+            db.commit()
+    except Exception as e:
+        print(f" Erreur Admin: {e}")
+        db.rollback()
+    finally:
+        db.close()
+    # -------------------------------------
+
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS)
     await producer.start()
-    
-    # Lancement du consumer en fond au démarrage de l'API
-    asyncio.create_task(consume_history_loop())
-    
+        
     yield
-    await producer.stop()
+    if producer:
+        await producer.stop()
 
 
 app = FastAPI(title="Auth Service", lifespan=lifespan)
@@ -78,15 +66,8 @@ app.add_middleware(
 )
 
 async def publish(topic: str, data: dict):
-    await producer.send_and_wait(topic, json.dumps(data).encode())
-
-@app.options("/register")
-async def register_options():
-    return Response(status_code=204)
-
-@app.options("/login")
-async def login_options():
-    return Response(status_code=204)
+    if producer:
+        await producer.send_and_wait(topic, json.dumps(data).encode())
 
 @app.post("/register", response_model=UserOut)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -202,22 +183,3 @@ async def update_aura(
     await publish("user.aura_updated", {"user_id": current_user.id, "new_aura": current_user.aura})
     
     return {"message": "Aura mise à jour", "nouvelle_aura": current_user.aura}
-
-@app.get("/users/me/history")
-def get_my_match_history(authorization: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
-    try:
-        token = authorization.credentials
-        user_id = decode_token(token)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    history = db.query(MatchHistory).filter(
-        (MatchHistory.player_red_id == user.pseudo) | 
-        (MatchHistory.player_blue_id == user.pseudo)
-    ).order_by(MatchHistory.created_at.desc()).all()
-    
-    return history

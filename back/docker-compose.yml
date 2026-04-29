@@ -84,25 +84,6 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     restart: on-failure
 
-  teams_service:
-    build: ./teams_service
-    container_name: teams_app
-    ports:
-      - "8001:8000"
-    depends_on:
-      db:
-        condition: service_healthy
-      kafka-init:
-        condition: service_completed_successfully
-    environment:
-      MYSQL_HOST: db
-      MYSQL_USER: root
-      MYSQL_PASSWORD: password
-      MYSQL_DATABASE: fastapi_db
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      PYTHONUNBUFFERED: "1"
-    restart: on-failure
-
   pokemon-service:
     build:
       context: ./pokemon_service 

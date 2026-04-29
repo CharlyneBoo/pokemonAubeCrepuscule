@@ -1,4 +1,4 @@
-from sqlalchemy import CHAR, Column, DateTime, String, Integer, JSON, TIMESTAMP, ForeignKey, func
+from sqlalchemy import CHAR, Boolean, Column, DateTime, String, Integer, JSON, TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import relationship
 import uuid
 from .database import Base
@@ -19,7 +19,8 @@ class User(Base):
     aura = Column(Integer, nullable=False, default=500)
     created_at = Column(DateTime, server_default=func.now())
     pokemon_team = relationship("PokemonTeam", back_populates="owner")
-
+    is_admin = Column(Boolean, default=False) # Tous les nouveaux comptes sont des simples users
+    
 class PokemonTeam(Base):
     __tablename__ = "pokemon_teams"
     
@@ -38,17 +39,4 @@ class PokemonTeam(Base):
     pokemon_6 = Column(Integer, nullable=True) 
     owner = relationship("User", back_populates="pokemon_team")
     
-class MatchHistory(Base):
-    __tablename__ = "match_history"
-    
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    match_uuid = Column(String(100), unique=True) 
-    player_red_id = Column(String(36)) 
-    player_blue_id = Column(String(36))
-    winner_id = Column(String(36), nullable=True)
-    game_mode = Column(String(50))
-    
-    match_logs = Column(JSON) 
-    
-    created_at = Column(DateTime, server_default=func.now())
 

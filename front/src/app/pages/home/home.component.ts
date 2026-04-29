@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Auth } from '../../services/auth';
 import { PokemonTeamService } from '../../services/pokemon_team.service';
-import { HttpClient, HttpHeaders } from '@angular/common/http'; 
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -23,7 +23,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     pseudo: 'Chargement...',
     team_color: 'red',
     score: 0,
-    avatar: '/avatar/gobou.jpeg' 
+    avatar: '/avatar/gobou.jpeg',
+    is_admin: false
   };
 
   availableAvatars: string[] = [
@@ -55,7 +56,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private router: Router,
     private auth: Auth,
     private teamService: PokemonTeamService,
-    private http: HttpClient, 
+    private http: HttpClient,
     @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
@@ -70,25 +71,28 @@ export class HomeComponent implements OnInit, OnDestroy {
   async chargerProfil() {
     if (isPlatformBrowser(this.platformId)) {
       try {
-        const data = await this.auth.getMe();
-        this.user.id = data.id;
-        this.user.pseudo = data.pseudo;
-        this.user.team_color = data.team_color || 'red';
+        const data: any = await this.auth.getMe();
         
-        if (data.avatar_url) {
-          this.user.avatar = data.avatar_url;
-        }
+        this.user = {
+          id: data.id,
+          pseudo: data.pseudo,
+          team_color: data.team_color || 'red',
+          score: data.aura || 0,
+          is_admin: data.is_admin === true, 
+          avatar: data.avatar_url || '/avatar/gobou.jpeg'
+        };
 
         this.charger_mes_equipes();
-        this.connect_home_chat();        
+        this.connect_home_chat();
       } catch (err) {
         console.error("Erreur d'authentification ou non connecté :", err);
         this.auth.logout();
         this.router.navigate(['/login']);
       }
+      
     }
   }
-  
+
   charger_mes_equipes() {
     if (this.user.id) {
       this.teamService.getPokemonTeams(this.user.id).subscribe({
@@ -123,7 +127,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       await this.auth.updateProfile({
         pseudo: this.user.pseudo,
         team_color: this.user.team_color,
-        avatar_url: this.user.avatar 
+        avatar_url: this.user.avatar
       });
       console.log("Profil mis à jour !");
     } catch (err) {
@@ -168,14 +172,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   async ouvrir_historique() {
     this.show_history_modal = true;
     this.is_loading_history = true;
-    
+
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     try {
-      const response: any = await firstValueFrom(
-        this.http.get('http://localhost:8000/users/me/history', { headers })
-      );
+      const url = `http://localhost:8004/history/${this.user.pseudo}`; 
+      
+      const response: any = await firstValueFrom(this.http.get(url));
       this.match_history = response;
     } catch (error) {
       console.error("Erreur lors de la récupération de l'historique", error);
@@ -190,10 +194,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   async ouvrir_console_admin() {
     this.show_admin_modal = true;
     this.is_loading_logs = true;
-    
+
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     try {
       const response: any = await firstValueFrom(
         this.http.get('http://localhost:8006/admin/logs', { headers })
@@ -205,14 +209,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.is_loading_logs = false;
     }
   }
-  
+
   logout() {
-    // Suppression des tokens
     localStorage.removeItem('token');
     localStorage.removeItem('access_token');
-    
     this.user = null;
-
     this.router.navigate(['/login']);
   }
 

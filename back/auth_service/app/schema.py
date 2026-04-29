@@ -22,7 +22,8 @@ class UserOut(BaseModel):
     team_color: str
     avatar_url: Optional[str] = None  
     aura: int
-                
+    is_admin: bool
+    
     class Config:
         from_attributes = True
 

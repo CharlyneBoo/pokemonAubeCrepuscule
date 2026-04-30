@@ -27,6 +27,7 @@ async def lifespan(app: FastAPI):
     
     db = SessionLocal()
     try:
+        # Création du compte admin
         admin = db.query(User).filter(User.pseudo == "admin").first()
         if not admin:
             new_admin = User(
@@ -39,6 +40,33 @@ async def lifespan(app: FastAPI):
                 is_admin=True       
             )
             db.add(new_admin)
+            # Création du compte test Team Red 
+        test_red = db.query(User).filter(User.pseudo == "rouge").first()
+        if not test_red:
+            new_red = User(
+                name="Rouge",             
+                first_name="Joueur",       
+                pseudo="rouge",
+                email="red@pokemon.com",
+                hashed_password=hash_password("test"),
+                team_color="red",
+                is_admin=False       
+            )
+            db.add(new_red)
+
+        # Création du compte test Team Blue 
+        test_blue = db.query(User).filter(User.pseudo == "bleu").first()
+        if not test_blue:
+            new_blue = User(
+                name="Bleu",             
+                first_name="Joueur",       
+                pseudo="bleu",
+                email="blue@pokemon.com",
+                hashed_password=hash_password("test"), 
+                team_color="blue",
+                is_admin=False       
+            )
+            db.add(new_blue)
             db.commit()
     except Exception as e:
         print(f" Erreur Admin: {e}")

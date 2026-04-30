@@ -43,6 +43,7 @@ http://pokemon.aube.crepuscule
 # Informations et Technique 
 
 - L'API pokémon allant jusqu'à l'id 1025, nos services également.
+- Recharger le cache avec ctrl + shift + r peut aider à régler des comportements non voulus.
 - Le logo du site Aube et Crépuscule sert de bouton de retour à la page Home. 
 <img src="imagesreadme/Pasted%20image%2020260430133708.png" width="800">
 - Cliquer sur le pseudo d'un joueur, dans le chat ou dans un duel ouvre une petite page avec avatar, pseudo et aura (points).

@@ -252,8 +252,7 @@ export class DuelComponent implements OnInit, OnDestroy {
         this.add_bot_message(data.message);
       }
 
-      if (data.kind === 'turn_result') {
-        this.has_played = false;
+     if (data.kind === 'turn_result') {
 
         if (this.my_pending_switch) {
           if (this.team_color === 'red') this.active_red = this.my_pending_switch;
@@ -290,6 +289,7 @@ export class DuelComponent implements OnInit, OnDestroy {
           if (!this.is_game_over) {
             this.timer_left = 90;
             this.current_turn++;
+            this.has_played = false;
           }
         }, 2000);
       }

@@ -20,6 +20,7 @@ class UserOut(BaseModel):
     first_name: str
     pseudo: str
     team_color: str
+    team_chat_only: bool = False
     avatar_url: Optional[str] = None  
     aura: int
     is_admin: bool
@@ -37,4 +38,5 @@ class UpdateTeamModel(BaseModel):
 class UserUpdate(BaseModel):
     pseudo: Optional[str] = None
     team_color: Optional[str] = None
+    team_chat_only: Optional[bool] = None
     avatar_url: Optional[str] = None

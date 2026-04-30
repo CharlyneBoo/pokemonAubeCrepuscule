@@ -9,10 +9,16 @@ export interface UserOut {
   email: string;
   pseudo: string;
   team_color: string;
+  team_chat_only?: boolean;
   avatar_url?: string;
   aura?: number;
 }
-interface UserUpdate { pseudo?: string; team_color?: string; avatar_url?: string; } 
+interface UserUpdate {
+  pseudo?: string;
+  team_color?: string;
+  team_chat_only?: boolean;
+  avatar_url?: string;
+} 
 
 @Injectable({
   providedIn: 'root',

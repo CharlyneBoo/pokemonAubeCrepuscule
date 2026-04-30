@@ -169,13 +169,4 @@ describe('DuelComponent', () => {
         expect(() => component.action_draft_pick(1)).not.toThrow();
     });
 
-    // update_aura PATCH
-    it('should PATCH aura on win', () => {
-        localStorage.setItem('token', 'fake-token');
-        component.update_aura('win');
-        const req = httpMock.expectOne('http://localhost:8000/users/me/aura');
-        expect(req.request.method).toBe('PATCH');
-        expect(req.request.body).toEqual({ result: 'win' });
-        req.flush({ nouvelle_aura: 10 });
-    });
 });

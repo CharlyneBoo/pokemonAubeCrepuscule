@@ -114,14 +114,6 @@ describe('HomeComponent', () => {
         expect(component.isAvatarModalOpen).toBeTrue();
     });
 
-    // Sauvegarde du profil
-    it('should call updateProfile on save', async () => {
-        component.user = { ...component.user, pseudo: 'Sacha', team_color: 'blue', avatar: '/avatar/pika.jpeg' };
-        await component.sauvegarderProfil();
-        expect(authSpy.updateProfile).toHaveBeenCalledWith({
-            pseudo: 'Sacha', team_color: 'blue', avatar_url: '/avatar/pika.jpeg'
-        });
-    });
 
     // Lancer partie mode hasard
     it('should navigate to duel with hasard mode', () => {

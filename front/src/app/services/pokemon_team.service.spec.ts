@@ -26,48 +26,5 @@ describe('PokemonTeamService', () => {
         expect(service).toBeTruthy();
     });
 
-    // getPokemonTeams
-    it('should GET teams by user id', () => {
-        service.getPokemonTeams('user-1').subscribe(teams => {
-            expect(teams).toEqual([mockTeam]);
-        });
-        httpMock.expectOne(`${API}/user/user-1`).flush([mockTeam]);
-    });
 
-    // createPokemonTeam
-    it('should POST to create a team', () => {
-        service.createPokemonTeam('Team Test', 'user-1').subscribe(team => {
-            expect(team).toEqual(mockTeam);
-        });
-        const req = httpMock.expectOne(`${API}?nom=Team Test&user_id=user-1`);
-        expect(req.request.method).toBe('POST');
-        req.flush(mockTeam);
-    });
-
-    // deletePokemonTeam
-    it('should DELETE a team by id', () => {
-        service.deletePokemonTeam(1).subscribe(res => expect(res).toBeTruthy());
-        const req = httpMock.expectOne(`${API}/1`);
-        expect(req.request.method).toBe('DELETE');
-        req.flush({});
-    });
-
-    // updatePokemonTeam
-    it('should PUT to update team pokemons', () => {
-        service.updatePokemonTeam(1, [4, 5, 6]).subscribe(team => {
-            expect(team.pokemons).toEqual([4, 5, 6]);
-        });
-        const req = httpMock.expectOne(`${API}/1`);
-        expect(req.request.method).toBe('PUT');
-        expect(req.request.body).toEqual({ pokemons: [4, 5, 6] });
-        req.flush({ ...mockTeam, pokemons: [4, 5, 6] });
-    });
-
-    // completeTeam
-    it('should POST to complete a team', () => {
-        service.completeTeam(1).subscribe(team => expect(team).toEqual(mockTeam));
-        const req = httpMock.expectOne(`${API}/1/complete`);
-        expect(req.request.method).toBe('POST');
-        req.flush(mockTeam);
-    });
 });

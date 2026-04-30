@@ -1,38 +1,22 @@
-<div class="max-w-7xl mx-auto flex justify-end">
-  <img
-    (click)="showLeaveWarning = true"
-    class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
-    src="/titre.png"
-    alt="Logo"
-  />
-</div>
-<div
-  *ngIf="current_phase === 'waiting'"
-  class="flex items-center justify-center h-screen bg-gray-200 -mb-4"
->
+<div *ngIf="current_phase === 'waiting'" class="flex items-center justify-center h-screen bg-gray-200 -mb-4">
   <div class="text-3xl font-bold animate-pulse text-gray-700">En attente de l'adversaire...</div>
 </div>
 
-<div
-  *ngIf="current_phase !== 'waiting'"
-  class="duel-page min-h-screen"
-  [ngClass]="team_color === 'red' ? 'bg-red-200' : 'bg-blue-200'"
->
+<div *ngIf="current_phase !== 'waiting'" class="duel-page min-h-screen relative"
+  [ngClass]="team_color === 'red' ? 'bg-red-200' : 'bg-blue-200'">
+  <img (click)="showLeaveWarning = true"
+    class="absolute right-4 top-3 z-20 w-24 md:w-32 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
+    src="/titre.png" alt="Logo" />
   <div
-    class="timer-header bg-white p-4 text-center font-bold text-2xl shadow-md border-b-4 border-gray-300 flex justify-center gap-8"
-  >
+    class="timer-header bg-white py-3 px-4 text-center font-bold text-xl md:text-2xl shadow-md border-b-4 border-gray-300 flex justify-center gap-6">
     <span *ngIf="current_phase === 'battle'" class="text-blue-600">TOUR {{ current_turn }}</span>
-    <span *ngIf="current_phase === 'draft'" class="text-purple-600 uppercase tracking-widest"
-      >PHASE DE DRAFT</span
-    >
+    <span *ngIf="current_phase === 'draft'" class="text-purple-600 uppercase tracking-widest">PHASE DE DRAFT</span>
     <span *ngIf="current_phase === 'battle'">Temps restant : {{ timer_left }}s</span>
   </div>
 
-  <div class="main-battle-area flex justify-between mt-8 px-8 h-[500px]">
+  <div class="main-battle-area flex justify-between mt-4 px-8 h-[500px]">
     <div class="sidebar w-32">
-      <ng-container
-        *ngTemplateOutlet="team_color === 'blue' ? mySidebar : oppSidebar"
-      ></ng-container>
+      <ng-container *ngTemplateOutlet="team_color === 'blue' ? mySidebar : oppSidebar"></ng-container>
     </div>
 
     <div
@@ -41,89 +25,58 @@
         current_phase === 'draft'
           ? 'bg-gray-800 border-8 border-gray-900'
           : 'bg-green-500 border-8 border-green-700'
-      "
-      [style.background-image]="current_phase === 'draft' ? 'none' : 'url(/background.png)'"
-    >
-      <div
-        *ngIf="current_phase === 'battle'"
-        class="absolute inset-0 border-4 border-white/20 m-4 rounded-xl pointer-events-none"
-      ></div>
-      <div
-        *ngIf="current_phase === 'battle'"
-        class="absolute left-1/2 top-0 bottom-0 w-2 bg-white/20 -translate-x-1/2 pointer-events-none"
-      ></div>
+      " [style.background-image]="current_phase === 'draft' ? 'none' : 'url(/background.png)'">
+      <div *ngIf="current_phase === 'battle'"
+        class="absolute inset-0 border-4 border-white/20 m-4 rounded-xl pointer-events-none"></div>
+      <div *ngIf="current_phase === 'battle'"
+        class="absolute left-1/2 top-0 bottom-0 w-2 bg-white/20 -translate-x-1/2 pointer-events-none"></div>
 
       <div *ngIf="current_phase === 'draft'" class="w-full h-full p-4 flex flex-col">
-        <h2
-          class="text-center text-white text-3xl font-black mb-6"
-          [ngClass]="draft_turn === team_color ? 'text-yellow-400 animate-pulse' : 'text-gray-400'"
-        >
+        <h2 class="text-center text-white text-3xl font-black mb-6"
+          [ngClass]="draft_turn === team_color ? 'text-yellow-400 animate-pulse' : 'text-gray-400'">
           {{
-            draft_turn === team_color ? 'À VOTRE TOUR DE CHOISIR !' : "L'adversaire réfléchit..."
+          draft_turn === team_color ? 'À VOTRE TOUR DE CHOISIR !' : "L'adversaire réfléchit..."
           }}
         </h2>
 
         <div class="flex flex-wrap gap-4 justify-center items-center overflow-y-auto">
-          <button
-            *ngFor="let p of draft_pool"
-            (click)="action_draft_pick(p.id)"
-            [disabled]="draft_turn !== team_color"
-            class="bg-white/10 hover:bg-white/30 border-2 border-white/30 p-2 rounded-xl transition-all hover:-translate-y-1 w-24 h-24 flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button *ngFor="let p of draft_pool" (click)="action_draft_pick(p.id)" [disabled]="draft_turn !== team_color"
+            class="bg-white/10 hover:bg-white/30 border-2 border-white/30 p-2 rounded-xl transition-all hover:-translate-y-1 w-24 h-24 flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
             <img [src]="p.icon_url" class="max-h-full drop-shadow-lg" />
           </button>
         </div>
       </div>
 
       <ng-container *ngIf="current_phase === 'battle'">
-        <div
-          class="active-pokemon flex flex-col justify-center items-center z-10 relative h-full flex-1"
-        >
+        <div class="active-pokemon flex flex-col justify-center items-center z-10 relative h-full flex-1">
           <div *ngIf="active_blue" class="relative">
-            <img
-              [src]="active_blue.sprite_url"
-              class="w-48 h-48 object-contain drop-shadow-2xl relative z-10 scale-x-[-1]"
-            />
-            <div
-              class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0"
-            ></div>
-            <div
-              class="bg-white/90 text-blue-800 border-2 border-blue-500 font-bold text-center mt-2 rounded px-2"
-            >
+            <img [src]="active_blue.sprite_url"
+              class="w-48 h-48 object-contain drop-shadow-2xl relative z-10 scale-x-[-1]" />
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0">
+            </div>
+            <div class="bg-white/90 text-blue-800 border-2 border-blue-500 font-bold text-center mt-2 rounded px-2">
               {{ active_blue.name }}
             </div>
           </div>
-          <div
-            *ngIf="!active_blue"
-            class="text-white font-black text-xl bg-black/50 p-4 rounded-xl text-center border-2 border-dashed border-white uppercase backdrop-blur-sm"
-          >
+          <div *ngIf="!active_blue"
+            class="text-white font-black text-xl bg-black/50 p-4 rounded-xl text-center border-2 border-dashed border-white uppercase backdrop-blur-sm">
             Sélectionner<br />un remplaçant
           </div>
         </div>
 
         <div class="vs text-6xl font-black italic text-white drop-shadow-lg z-10 mx-4">VS</div>
 
-        <div
-          class="active-pokemon flex flex-col justify-center items-center z-10 relative h-full flex-1"
-        >
+        <div class="active-pokemon flex flex-col justify-center items-center z-10 relative h-full flex-1">
           <div *ngIf="active_red" class="relative">
-            <img
-              [src]="active_red.sprite_url"
-              class="w-48 h-48 object-contain drop-shadow-2xl relative z-10"
-            />
-            <div
-              class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0"
-            ></div>
-            <div
-              class="bg-white/90 text-red-800 border-2 border-red-500 font-bold text-center mt-2 rounded px-2"
-            >
+            <img [src]="active_red.sprite_url" class="w-48 h-48 object-contain drop-shadow-2xl relative z-10" />
+            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0">
+            </div>
+            <div class="bg-white/90 text-red-800 border-2 border-red-500 font-bold text-center mt-2 rounded px-2">
               {{ active_red.name }}
             </div>
           </div>
-          <div
-            *ngIf="!active_red"
-            class="text-white font-black text-xl bg-black/50 p-4 rounded-xl text-center border-2 border-dashed border-white uppercase backdrop-blur-sm"
-          >
+          <div *ngIf="!active_red"
+            class="text-white font-black text-xl bg-black/50 p-4 rounded-xl text-center border-2 border-dashed border-white uppercase backdrop-blur-sm">
             Sélectionner<br />un remplaçant
           </div>
         </div>
@@ -131,46 +84,43 @@
     </div>
 
     <div class="sidebar w-32">
-      <ng-container
-        *ngTemplateOutlet="team_color === 'red' ? mySidebar : oppSidebar"
-      ></ng-container>
+      <ng-container *ngTemplateOutlet="team_color === 'red' ? mySidebar : oppSidebar"></ng-container>
     </div>
   </div>
 
-  <div
-    class="chat-panel mt-8 bg-white border-4 border-gray-300 rounded-xl w-2/3 mx-auto shadow-inner"
-  >
+  <div class="chat-panel mt-8 bg-white border-4 border-gray-300 rounded-xl w-2/3 mx-auto shadow-inner">
     <div class="flex border-b-2 border-gray-200">
-      <button
-        class="flex-1 px-4 py-3 font-bold text-sm uppercase tracking-wide transition-colors"
-        [ngClass]="
+      <button class="flex-1 px-4 py-3 font-bold text-sm uppercase tracking-wide transition-colors" [ngClass]="
           active_chat_tab === 'journal'
             ? 'bg-slate-900 text-white'
             : 'bg-white text-slate-600 hover:bg-slate-100'
-        "
-        (click)="select_chat_tab('journal')"
-      >
+        " (click)="select_chat_tab('journal')">
         Journal du combat
       </button>
-      <button
-        class="flex-1 px-4 py-3 font-bold text-sm uppercase tracking-wide transition-colors"
-        [ngClass]="
+      <button class="flex-1 px-4 py-3 font-bold text-sm uppercase tracking-wide transition-colors" [ngClass]="
           active_chat_tab === 'chat'
             ? 'bg-slate-900 text-white'
             : 'bg-white text-slate-600 hover:bg-slate-100'
-        "
-        (click)="select_chat_tab('chat')"
-      >
+        " (click)="select_chat_tab('chat')">
         Chat joueur
       </button>
     </div>
 
-    <div
-      *ngIf="active_chat_tab === 'journal'"
-      class="journal-messages h-40 overflow-y-auto p-4 text-sm flex flex-col gap-2"
-    >
+    <div *ngIf="active_chat_tab === 'journal'"
+      class="journal-messages h-40 overflow-y-auto p-4 text-sm flex flex-col gap-2">
       <div *ngFor="let m of message_list" class="text-[15px] leading-snug">
-        <span class="font-bold text-blue-700">{{ m.user }} :</span>
+        <span *ngIf="canOpenChatProfile(m.user); else plainJournalAuthor"
+          class="font-bold cursor-pointer hover:underline" [ngClass]="getTeamTextColor(m.user)"
+          (click)="openChatProfile(m.user)">
+          {{ m.user }} :
+        </span>
+
+        <ng-template #plainJournalAuthor>
+          <span class="font-bold" [ngClass]="getTeamTextColor(m.user)">
+            {{ m.user }} :
+          </span>
+        </ng-template>
+
         <span class="whitespace-pre-line text-gray-800"> {{ m.text }}</span>
       </div>
     </div>
@@ -178,7 +128,8 @@
     <div *ngIf="active_chat_tab === 'chat'" class="p-4">
       <div class="player-chat-messages h-32 overflow-y-auto text-sm flex flex-col gap-1 pr-1">
         <div *ngFor="let m of chat_messages" class="text-[15px] leading-snug">
-          <span class="font-bold" [ngClass]="m.is_self ? 'text-blue-600' : 'text-red-600'">
+          <span class="font-bold cursor-pointer hover:underline" [ngClass]="getTeamTextColor(m.user)"
+            (click)="openChatProfile(m.user)">
             {{ m.user }} :
           </span>
           <span class="text-gray-800"> {{ m.text }}</span>
@@ -189,19 +140,11 @@
       </div>
 
       <div class="mt-3 flex gap-2">
-        <input
-          [(ngModel)]="chat_input"
-          (keydown.enter)="send_chat_message()"
-          type="text"
-          maxlength="300"
+        <input [(ngModel)]="chat_input" (keydown.enter)="send_chat_message()" type="text" maxlength="300"
           placeholder="Envoyer un message à l'adversaire"
-          class="flex-1 rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
-        />
-        <button
-          (click)="send_chat_message()"
-          [disabled]="!chat_input.trim()"
-          class="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white disabled:opacity-50"
-        >
+          class="flex-1 rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500" />
+        <button (click)="send_chat_message()" [disabled]="!chat_input.trim()"
+          class="rounded-lg bg-blue-600 px-4 py-2 font-bold text-white disabled:opacity-50">
           Envoyer
         </button>
       </div>
@@ -209,93 +152,88 @@
   </div>
 </div>
 
-<div
-  *ngIf="is_game_over"
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
->
-  <div
-    class="relative bg-white rounded-[3rem] border-[10px] shadow-2xl p-10 max-w-md w-full text-center"
-    [ngClass]="{
+<div *ngIf="selected_chat_profile"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" (click)="closeChatProfile()">
+  <div class="w-[320px] rounded-2xl bg-white p-6 shadow-2xl border-4 text-center"
+    [ngClass]="getProfileBorderClass(selected_chat_profile.team_color)" (click)="$event.stopPropagation()">
+    <img [src]="selected_chat_profile.avatar_url || '/avatar/gobou.jpeg'" alt="Avatar"
+      class="mx-auto h-24 w-24 rounded-full object-cover border-4 shadow-md"
+      [ngClass]="getProfileAvatarBorderClass(selected_chat_profile.team_color)" />
+    <div class="mt-4 text-2xl font-black text-[#311b5e]">{{ selected_chat_profile.pseudo }}</div>
+    <div class="mt-3 rounded-xl bg-gray-100 px-4 py-3">
+      <div class="text-xs font-bold uppercase text-gray-400">Points</div>
+      <div class="text-3xl font-black text-[#db5151]">{{ selected_chat_profile.aura ?? 0 }}</div>
+    </div>
+    <button (click)="closeChatProfile()" class="mt-5 rounded-xl bg-[#311b5e] px-5 py-2 font-bold text-white">
+      Fermer
+    </button>
+  </div>
+</div>
+
+<div *ngIf="is_game_over" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+  <div class="relative bg-white rounded-[3rem] border-[10px] shadow-2xl p-10 max-w-md w-full text-center" [ngClass]="{
       'border-[#22c55e]': match_result === 'win',
       'border-[#ef4444]': match_result === 'loss',
       'border-[#4b5563]': match_result === 'draw',
-    }"
-  >
+    }">
     <div
       class="absolute -top-7 left-1/2 -translate-x-1/2 px-10 py-2 rounded-full font-bold text-white text-lg shadow-md border-4 border-white"
       [ngClass]="{
         'bg-[#22c55e]': match_result === 'win',
         'bg-[#ef4444]': match_result === 'loss',
         'bg-[#4b5563]': match_result === 'draw',
-      }"
-    >
+      }">
       RÉSULTAT
     </div>
 
-    <h2
-      class="text-7xl font-black mb-4 mt-6 tracking-tight"
-      [ngClass]="{
+    <h2 class="text-7xl font-black mb-4 mt-6 tracking-tight" [ngClass]="{
         'text-[#22c55e]': match_result === 'win',
         'text-[#ef4444]': match_result === 'loss',
         'text-[#374151]': match_result === 'draw',
-      }"
-    >
+      }">
       {{ match_result === 'win' ? 'VICTOIRE' : match_result === 'loss' ? 'DÉFAITE' : 'ÉGALITÉ' }}
     </h2>
 
     <div class="mb-8">
-      <div
-        class="text-[#311b5e] text-3xl font-black uppercase tracking-wider"
-        [ngClass]="{ '!text-[#4b5563]': match_result === 'draw' }"
-      >
+      <div class="text-[#311b5e] text-3xl font-black uppercase tracking-wider"
+        [ngClass]="{ '!text-[#4b5563]': match_result === 'draw' }">
         {{ match_result === 'draw' ? 'Aucun vainqueur' : winner_name }}
       </div>
       <div class="text-gray-500 font-bold text-lg">
         {{
-          match_result === 'draw'
-            ? 'Le combat se termine sur un score nul !'
-            : 'a remporté le match !'
+        match_result === 'draw'
+        ? 'Le combat se termine sur un score nul !'
+        : 'a remporté le match !'
         }}
       </div>
     </div>
 
-    <div
-      class="inline-flex items-center gap-4 bg-white border-4 rounded-2xl px-8 py-3 mb-10 shadow-sm"
-      [ngClass]="{
+    <div class="inline-flex items-center gap-4 bg-white border-4 rounded-2xl px-8 py-3 mb-10 shadow-sm" [ngClass]="{
         'border-[#22c55e]': match_result === 'win',
         'border-[#ef4444]': match_result === 'loss',
         'border-[#d1d5db]': match_result === 'draw',
-      }"
-    >
+      }">
       <div class="flex flex-col text-left leading-tight">
         <span class="text-gray-300 font-bold text-xs uppercase">Aura</span>
-        <span
-          class="text-[#311b5e] font-black text-sm uppercase"
-          [ngClass]="{ '!text-[#4b5563]': match_result === 'draw' }"
-          >Score</span
-        >
+        <span class="text-[#311b5e] font-black text-sm uppercase"
+          [ngClass]="{ '!text-[#4b5563]': match_result === 'draw' }">Score</span>
       </div>
-      <span
-        class="text-5xl font-black"
-        [ngClass]="{
+      <span class="text-5xl font-black" [ngClass]="{
           'text-[#22c55e]': match_result === 'win',
           'text-[#ef4444]': match_result === 'loss',
           'text-[#4b5563]': match_result === 'draw',
-        }"
-      >
+        }">
         {{ match_result === 'win' ? '+10' : match_result === 'loss' ? '-10' : '0' }}
       </span>
     </div>
 
-    <button
-      routerLink="/home"
+    <button routerLink="/home"
       class="block w-full text-white px-8 py-5 rounded-2xl font-black text-2xl transition-all hover:scale-105 active:scale-95 shadow-lg"
       [ngClass]="{
         'bg-[#22c55e] hover:bg-[#1db053]': match_result === 'win',
         'bg-[#ef4444] hover:bg-[#d93a3a]': match_result === 'loss',
         'bg-[#4b5563] hover:bg-[#374151]': match_result === 'draw',
-      }"
-    >
+      }">
       Retour au Menu
     </button>
   </div>
@@ -303,19 +241,16 @@
 
 <ng-template #mySidebar>
   <div class="flex flex-col gap-3 h-full items-center">
-    <div
-      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight"
+    <button type="button" (click)="openChatProfile(user?.pseudo || 'Mon Équipe')"
+      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
       [ngClass]="
         team_color === 'red' ? 'border-red-500 text-red-600' : 'border-blue-500 text-blue-600'
-      "
-    >
+      ">
       {{ user?.pseudo ? user.pseudo : 'Mon Équipe' }}
-    </div>
+    </button>
 
     <div *ngFor="let p of my_team" class="relative">
-      <button
-        (click)="action_switch(p)"
-        [disabled]="
+      <button (click)="action_switch(p)" [disabled]="
           is_game_over ||
           p.is_ko ||
           p === get_my_active_pokemon() ||
@@ -327,8 +262,7 @@
           'border-green-500 bg-green-50 ring-2 ring-green-400 scale-110 z-10':
             p === get_my_active_pokemon(),
           'opacity-40 grayscale cursor-not-allowed': p.is_ko,
-        }"
-      >
+        }">
         <img [src]="p.icon_url" class="max-h-full max-w-full drop-shadow-md object-contain" />
       </button>
     </div>
@@ -336,16 +270,11 @@
     <div *ngIf="current_phase === 'battle'" class="mt-auto flex flex-col gap-2 w-full">
       <button
         class="bg-blue-600 text-white font-bold py-2 px-2 rounded disabled:opacity-50 disabled:bg-gray-500 text-sm shadow transition-all"
-        (click)="action_stay()"
-        [disabled]="is_game_over || !get_my_active_pokemon() || has_played"
-      >
+        (click)="action_stay()" [disabled]="is_game_over || !get_my_active_pokemon() || has_played">
         {{ has_played ? 'EN ATTENTE...' : 'STAY' }}
       </button>
-      <button
-        class="bg-red-600 text-white font-bold py-1 px-2 rounded disabled:opacity-50 text-sm shadow"
-        (click)="action_forfeit()"
-        [disabled]="is_game_over"
-      >
+      <button class="bg-red-600 text-white font-bold py-1 px-2 rounded disabled:opacity-50 text-sm shadow"
+        (click)="action_forfeit()" [disabled]="is_game_over">
         FORFAIT
       </button>
     </div>
@@ -354,47 +283,37 @@
 
 <ng-template #oppSidebar>
   <div class="flex flex-col gap-3 h-full items-center">
-    <div
-      class="text-center font-black text-gray-700 bg-gray-200 rounded-lg py-2 border-2 border-gray-400 w-full shadow-sm break-words px-1 leading-tight"
-    >
+    <button type="button" (click)="openChatProfile(opponent_pseudo)"
+      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
+      [ngClass]="
+        team_color === 'red' ? 'border-blue-500 text-blue-600' : 'border-red-500 text-red-600'
+      ">
       {{ opponent_pseudo }}
-    </div>
+    </button>
 
-    <div
-      *ngFor="let p of opponent_team"
+    <div *ngFor="let p of opponent_team"
       class="aspect-[3/4] w-20 flex-shrink-0 rounded-lg border-2 shadow flex items-center justify-center transition-all relative overflow-hidden"
       [ngClass]="{
         'bg-gray-200': game_mode !== 'hasard' || p.is_revealed,
         'opacity-40 grayscale': p.is_ko,
         'border-red-500 bg-red-100 ring-2 ring-red-400 scale-110 z-10':
           p === get_opp_active_pokemon(),
-      }"
-    >
-      <img
-        *ngIf="game_mode !== 'hasard' || p.is_revealed"
-        [src]="p.icon_url"
-        class="max-h-full max-w-full p-2 drop-shadow-md relative z-10 object-contain"
-      />
+      }">
+      <img *ngIf="game_mode !== 'hasard' || p.is_revealed" [src]="p.icon_url"
+        class="max-h-full max-w-full p-2 drop-shadow-md relative z-10 object-contain" />
 
-      <img
-        *ngIf="game_mode === 'hasard' && !p.is_revealed"
+      <img *ngIf="game_mode === 'hasard' && !p.is_revealed"
         [src]="team_color === 'red' ? '/cartebleu.png' : '/carterouge.png'"
-        class="absolute inset-0 w-full h-full object-cover z-0"
-      />
+        class="absolute inset-0 w-full h-full object-cover z-0" />
     </div>
   </div>
 </ng-template>
 
-<div
-  *ngIf="showLeaveWarning"
-  class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
->
-  <div
-    class="bg-white rounded-3xl border-8 border-red-500 shadow-2xl p-8 max-w-md w-full text-center relative"
-  >
+<div *ngIf="showLeaveWarning"
+  class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-3xl border-8 border-red-500 shadow-2xl p-8 max-w-md w-full text-center relative">
     <div
-      class="bg-red-500 text-white w-16 h-16 rounded-full flex items-center justify-center font-black text-4xl mx-auto -mt-16 mb-4 shadow-lg border-4 border-white"
-    >
+      class="bg-red-500 text-white w-16 h-16 rounded-full flex items-center justify-center font-black text-4xl mx-auto -mt-16 mb-4 shadow-lg border-4 border-white">
       !
     </div>
 
@@ -407,30 +326,22 @@
     </p>
 
     <div class="flex gap-4 w-full">
-      <button
-        (click)="showLeaveWarning = false"
-        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition-all shadow-sm"
-      >
+      <button (click)="showLeaveWarning = false"
+        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition-all shadow-sm">
         Annuler
       </button>
 
-      <button
-        (click)="execute_forfeit(); showLeaveWarning = false"
-        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95"
-      >
+      <button (click)="execute_forfeit(); showLeaveWarning = false"
+        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95">
         Forfait
       </button>
     </div>
   </div>
 </div>
 
-<div
-  *ngIf="showForfeitConfirm"
-  class="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
->
-  <div
-    class="bg-white rounded-2xl border-4 border-red-600 shadow-2xl p-6 max-w-sm w-full text-center relative"
-  >
+<div *ngIf="showForfeitConfirm"
+  class="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+  <div class="bg-white rounded-2xl border-4 border-red-600 shadow-2xl p-6 max-w-sm w-full text-center relative">
     <h2 class="text-2xl font-black text-red-600 mb-2 uppercase tracking-tight">
       Déclarer Forfait ?
     </h2>
@@ -441,17 +352,13 @@
     </p>
 
     <div class="flex gap-4 w-full">
-      <button
-        (click)="showForfeitConfirm = false"
-        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 rounded-xl transition-all shadow-sm"
-      >
+      <button (click)="showForfeitConfirm = false"
+        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2.5 rounded-xl transition-all shadow-sm">
         Annuler
       </button>
 
-      <button
-        (click)="execute_forfeit()"
-        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 uppercase tracking-wide"
-      >
+      <button (click)="execute_forfeit()"
+        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 uppercase tracking-wide">
         Confirmer
       </button>
     </div>

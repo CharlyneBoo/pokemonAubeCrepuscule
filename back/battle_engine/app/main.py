@@ -54,6 +54,7 @@ class ConnectionManager:
                         "red_team_ids": donnees["red_team_ids"], "blue_team_ids": donnees["blue_team_ids"],
                         "red_active_index": donnees["red_active_index"], "blue_active_index": donnees["blue_active_index"]
                     }
+                await reset_chat_history(match_id)
                 await self.broadcast_to_match(message_depart, match_id)
             elif mode == "draft":
                 async with httpx.AsyncClient() as client:
@@ -133,6 +134,7 @@ class ConnectionManager:
                 "red_team_ids": state["red_team"], "blue_team_ids": state["blue_team"],
                 "red_active_index": random.randint(0, 5), "blue_active_index": random.randint(0, 5)
             }
+            await reset_chat_history(match_id)
             await self.broadcast_to_match(msg, match_id)
             del self.draft_states[match_id] 
         else:
@@ -158,6 +160,7 @@ class ConnectionManager:
                 "red_active_index": 0, 
                 "blue_active_index": 0
             }
+            await reset_chat_history(match_id)
             await self.broadcast_to_match(msg, match_id)
             del self.construit_teams[match_id]
 
@@ -222,7 +225,23 @@ async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_c
     await ws_manager.broadcast_to_match(result, match_id)
     print("[BattleEngine] turn_result publié:", result, flush=True)
 
-# Boucle de fond qui écoute les actions des joueurs sur Kafka.
+
+async def reset_chat_history(match_id: str):
+    if not producer:
+        return
+
+    await producer.send_and_wait(
+        CHAT_GLOBAL_TOPIC,
+        json.dumps({
+            "schema_version": 1,
+            "event_id": str(uuid.uuid4()),
+            "kind": "chat_reset",
+            "match_id": match_id,
+            "sent_at": now_iso(),
+        }).encode("utf-8"),
+        key=match_id.encode("utf-8"),
+    )
+
 async def consume_commands_loop():
     consumer = AIOKafkaConsumer(
         COMMANDS_TOPIC,

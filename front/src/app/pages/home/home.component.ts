@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, Inject, PLATFORM_ID } from '@angular/core
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Auth } from '../../services/auth';
+import { Auth, UserOut } from '../../services/auth';
 import { PokemonTeamService } from '../../services/pokemon_team.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
@@ -51,6 +51,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   home_chat_messages: Array<{ user: string; text: string; is_self: boolean }> = [];
   home_chat_input: string = '';
   home_chat_socket: WebSocket | null = null;
+  user_profiles: UserOut[] = [];
+  selected_chat_profile: { pseudo: string; avatar_url?: string; aura?: number } | null = null;
 
   constructor(
     private router: Router,
@@ -72,24 +74,34 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       try {
         const data: any = await this.auth.getMe();
-        
+
         this.user = {
           id: data.id,
           pseudo: data.pseudo,
           team_color: data.team_color || 'red',
           score: data.aura || 0,
-          is_admin: data.is_admin === true, 
+          is_admin: data.is_admin === true,
           avatar: data.avatar_url || '/avatar/gobou.jpeg'
         };
 
         this.charger_mes_equipes();
+        await this.charger_user_profiles();
         this.connect_home_chat();
       } catch (err) {
         console.error("Erreur d'authentification ou non connecté :", err);
         this.auth.logout();
         this.router.navigate(['/login']);
       }
-      
+
+    }
+  }
+
+  async charger_user_profiles() {
+    try {
+      this.user_profiles = await this.auth.getUsers();
+    } catch (error) {
+      console.error("Erreur chargement profils utilisateurs :", error);
+      this.user_profiles = [];
     }
   }
 
@@ -177,8 +189,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
     try {
-      const url = `http://localhost:8004/history/${this.user.pseudo}`; 
-      
+      const url = `http://localhost:8004/history/${this.user.pseudo}`;
+
       const response: any = await firstValueFrom(this.http.get(url));
       this.match_history = response;
     } catch (error) {
@@ -264,6 +276,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.home_chat_input = '';
   }
 
+  openChatProfile(pseudo: string) {
+    const profile = this.user_profiles.find((user) => user.pseudo === pseudo);
+    this.selected_chat_profile = {
+      pseudo,
+      avatar_url: profile?.avatar_url || '/avatar/gobou.jpeg',
+      aura: profile?.aura ?? 0,
+    };
+  }
+
+  closeChatProfile() {
+    this.selected_chat_profile = null;
+  }
+
   private scroll_home_chat() {
     setTimeout(() => {
       const container = document.querySelector('.home-chat-messages');
@@ -271,5 +296,19 @@ export class HomeComponent implements OnInit, OnDestroy {
         container.scrollTop = container.scrollHeight;
       }
     }, 50);
+  }
+
+  getTeamTextColor(pseudo: string): string {
+    const profile = this.user_profiles.find((user) => user.pseudo === pseudo);
+
+    if (profile?.team_color === 'blue') {
+      return 'text-blue-600';
+    }
+
+    if (profile?.team_color === 'red') {
+      return 'text-red-600';
+    }
+
+    return 'text-gray-800';
   }
 }

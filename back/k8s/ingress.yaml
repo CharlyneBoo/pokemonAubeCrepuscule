@@ -1,0 +1,77 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pokemon-ingress
+  namespace: pokemon-aube-crepuscule
+  annotations:
+    nginx.ingress.kubernetes.io/websocket-services: "chat-service,battle-engine"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - host: pokemon.aube.crepuscule
+    http:
+      paths:
+      
+      - path: /api/auth(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8000
+              
+      - path: /api/chat(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: chat-service
+            port:
+              number: 8007
+              
+      - path: /api/battle(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: battle-engine
+            port:
+              number: 8005
+              
+      - path: /api/pokemonteams(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: pokemon-team-service
+            port:
+              number: 8003
+              
+      - path: /api/pokemon(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: pokemon-service
+            port:
+              number: 8002
+              
+      - path: /api/log(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: log-service
+            port:
+              number: 8006
+              
+      - path: /api/duel(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: duel-service
+            port:
+              number: 8004 
+              
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 4200

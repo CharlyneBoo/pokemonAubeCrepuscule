@@ -174,5 +174,14 @@ services:
       PYTHONUNBUFFERED: "1"
     restart: on-failure
 
+  frontend:
+    build: 
+      context: ../front
+      dockerfile: Dockerfile
+    container_name: frontend_app
+    ports:
+      - "4200:4200"
+    restart: on-failure
+
 volumes:
   db_data:

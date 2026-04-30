@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: duel-service
+  name: duel-service
+spec:
+  containers:
+    - env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+      image: back-duel-service:latest
+      imagePullPolicy: Never
+      name: duel-service
+      ports:
+        - containerPort: 8000
+          protocol: TCP
+      volumeMounts:
+        - mountPath: /code/app
+          name: duel-service-cm0
+  restartPolicy: OnFailure
+  volumes:
+    - configMap:
+        name: duel-service-cm0
+      name: duel-service-cm0

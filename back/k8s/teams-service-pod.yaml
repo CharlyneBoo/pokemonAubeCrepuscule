@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: teams-service
+  name: teams-service
+spec:
+  containers:
+    - env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: kafka-svc:9092
+        - name: MYSQL_DATABASE
+          value: fastapi_db
+        - name: MYSQL_HOST
+          value: db
+        - name: MYSQL_PASSWORD
+          value: password
+        - name: MYSQL_USER
+          value: root
+        - name: PYTHONUNBUFFERED
+          value: "1"
+      image: back-teams_service:latest
+      imagePullPolicy: Never
+      name: teams-app
+      ports:
+        - containerPort: 8000
+          protocol: TCP
+  restartPolicy: OnFailure

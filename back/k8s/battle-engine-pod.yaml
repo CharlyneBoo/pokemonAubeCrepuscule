@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: battle-engine
+  name: battle-engine
+spec:
+  containers:
+    - env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: kafka-svc:9092
+        - name: PYTHONUNBUFFERED
+          value: "1"
+      image: back-battle_engine:latest
+      imagePullPolicy: Never
+      name: battle-engine
+      ports:
+        - containerPort: 8000
+          protocol: TCP
+      volumeMounts:
+        - mountPath: /code/app
+          name: battle-engine-cm0
+  restartPolicy: OnFailure
+  volumes:
+    - configMap:
+        name: battle-engine-cm0
+      name: battle-engine-cm0

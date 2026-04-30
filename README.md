@@ -89,6 +89,7 @@ Le joueur peut également voir son *Aura*, notre équivalent au élo. Le joueur 
 La première action possible, seulement pour les admins, est d'ouvrir la console de log avec le bouton **Admin Logs**.
 Les services ont des évènements qui vont générer des logs puis les envoient au service de log.
 Cela comprend la création et la connexion à un compte, la création d'une équipe, sa modification etc puis le lancement d'un nouveau duel.
+Si les logs sont vides malgrès les actions réalisées, c'est possible que le service prenne du temps à s'initialiser, il suffit d'attendre quelques minutes et les logs apparaitront en live.
 
 <img src="imagesreadme/Pasted%20image%2020260430125708.png" width="800">
 

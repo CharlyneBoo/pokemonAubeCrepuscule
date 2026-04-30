@@ -7,6 +7,7 @@ from fastapi.security import HTTPBearer
 from fastapi import FastAPI, Depends, HTTPException, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 from aiokafka import AIOKafkaProducer
 
@@ -24,6 +25,7 @@ security = HTTPBearer()
 async def lifespan(app: FastAPI):
     global producer
     Base.metadata.create_all(bind=engine)
+    ensure_auth_schema()
     
     db = SessionLocal()
     try:
@@ -64,6 +66,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def ensure_auth_schema():
+    inspector = inspect(engine)
+    user_columns = {column["name"] for column in inspector.get_columns("users")}
+    if "team_chat_only" not in user_columns:
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE users ADD COLUMN team_chat_only BOOLEAN NOT NULL DEFAULT FALSE"))
+
 
 async def publish(topic: str, data: dict):
     if producer:

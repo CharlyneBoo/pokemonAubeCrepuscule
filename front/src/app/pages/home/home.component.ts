@@ -24,7 +24,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     team_color: 'red',
     score: 0,
     avatar: '/avatar/gobou.jpeg',
-    is_admin: false
+    is_admin: false,
+    team_chat_only: false
   };
 
   availableAvatars: string[] = [
@@ -81,7 +82,8 @@ export class HomeComponent implements OnInit, OnDestroy {
           team_color: data.team_color || 'red',
           score: data.aura || 0,
           is_admin: data.is_admin === true,
-          avatar: data.avatar_url || '/avatar/gobou.jpeg'
+          avatar: data.avatar_url || '/avatar/gobou.jpeg',
+          team_chat_only: data.team_chat_only === true
         };
 
         this.charger_mes_equipes();
@@ -139,9 +141,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       await this.auth.updateProfile({
         pseudo: this.user.pseudo,
         team_color: this.user.team_color,
+        team_chat_only: this.user.team_chat_only === true,
         avatar_url: this.user.avatar
       });
       console.log("Profil mis à jour !");
+      this.connect_home_chat();
     } catch (err) {
       console.error("Erreur lors de la sauvegarde :", err);
     }
@@ -233,7 +237,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) return;
 
     this.home_chat_socket?.close();
-    this.home_chat_socket = new WebSocket(`ws://localhost:8007/ws/chat/${this.HOME_CHAT_ROOM}`);
+    const chatParams = new URLSearchParams({
+      player: this.user.team_color,
+      team_chat_only: String(this.user.team_chat_only === true),
+    });
+    this.home_chat_socket = new WebSocket(`ws://localhost:8007/ws/chat/${this.HOME_CHAT_ROOM}?${chatParams.toString()}`);
 
     this.home_chat_socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -272,6 +280,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       player: this.user.team_color,
       pseudo: this.user.pseudo || 'Joueur',
       message,
+      team_chat_only: this.user.team_chat_only === true,
     }));
     this.home_chat_input = '';
   }

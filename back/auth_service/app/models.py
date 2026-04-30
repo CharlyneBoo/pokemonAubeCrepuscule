@@ -15,6 +15,7 @@ class User(Base):
     first_name = Column(String(100), nullable=False)
     pseudo = Column(String(100), nullable=False)
     team_color = Column(String(50), nullable=False)
+    team_chat_only = Column(Boolean, default=False, nullable=False)
     avatar_url = Column(String(255), nullable=True)
     aura = Column(Integer, nullable=False, default=500)
     created_at = Column(DateTime, server_default=func.now())

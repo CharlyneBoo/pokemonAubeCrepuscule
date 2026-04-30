@@ -252,12 +252,18 @@
 
 <ng-template #mySidebar>
   <div class="flex flex-col gap-3 h-full items-center">
-    <button type="button" (click)="openChatProfile(user?.pseudo || 'Mon Équipe')"
-      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
-      [ngClass]="
-        team_color === 'red' ? 'border-red-500 text-red-600' : 'border-blue-500 text-blue-600'
-      ">
-      {{ user?.pseudo ? user.pseudo : 'Mon Équipe' }}
+   <button type="button" (click)="openChatProfile(user?.pseudo || 'Mon Équipe')"
+      class="w-full flex flex-col items-center gap-2 bg-white/90 rounded-lg p-2 border-2 shadow-sm cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all group"
+      [ngClass]="team_color === 'red' ? 'border-red-500' : 'border-blue-500'">
+      
+      <img [src]="getAvatarUrl(user?.pseudo)" 
+           class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 shadow-sm transition-transform group-hover:scale-105"
+           [ngClass]="team_color === 'red' ? 'border-red-300' : 'border-blue-300'" />
+           
+      <span class="text-center font-black break-words px-1 leading-tight text-sm"
+            [ngClass]="team_color === 'red' ? 'text-red-600' : 'text-blue-600'">
+        {{ user?.pseudo ? user.pseudo : 'Mon Équipe' }}
+      </span>
     </button>
 
     <div *ngFor="let p of my_team" class="relative">
@@ -294,12 +300,18 @@
 
 <ng-template #oppSidebar>
   <div class="flex flex-col gap-3 h-full items-center">
-    <button type="button" (click)="openChatProfile(opponent_pseudo)"
-      class="text-center font-black bg-white/90 rounded-lg py-2 border-2 w-full shadow-sm break-words px-1 leading-tight cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all"
-      [ngClass]="
-        team_color === 'red' ? 'border-blue-500 text-blue-600' : 'border-red-500 text-red-600'
-      ">
-      {{ opponent_pseudo }}
+  <button type="button" (click)="openChatProfile(opponent_pseudo)"
+      class="w-full flex flex-col items-center gap-2 bg-white/90 rounded-lg p-2 border-2 shadow-sm cursor-pointer hover:-translate-y-0.5 hover:shadow-md transition-all group"
+      [ngClass]="team_color === 'red' ? 'border-blue-500' : 'border-red-500'">
+      
+      <img [src]="getAvatarUrl(opponent_pseudo)" 
+           class="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 shadow-sm transition-transform group-hover:scale-105"
+           [ngClass]="team_color === 'red' ? 'border-blue-300' : 'border-red-300'" />
+           
+      <span class="text-center font-black break-words px-1 leading-tight text-sm"
+            [ngClass]="team_color === 'red' ? 'text-blue-600' : 'text-red-600'">
+        {{ opponent_pseudo }}
+      </span>
     </button>
 
     <div *ngFor="let p of opponent_team"

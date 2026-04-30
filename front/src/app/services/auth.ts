@@ -51,7 +51,7 @@ export class Auth {
   }
 
   async getUsers(): Promise<UserOut[]> {
-    return firstValueFrom(this.http.get<UserOut[]>(`${API}/users`));
+    return firstValueFrom(this.http.get<UserOut[]>(`${this.API}/users`));
   }
 
   getToken(): string | null {

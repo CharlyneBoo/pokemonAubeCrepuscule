@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
-app = FastAPI(title="Battle Engine")
+app = FastAPI(title="Battle Engine",root_path="/api/battle")
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,12 +33,22 @@ class ConnectionManager:
         
         # Pseudo des players
         self.player_pseudos: dict[str, dict] = {} 
+        self.room_colors: dict[str, str] = {} # --- MODIFICATION ICI ---
 
-    # Accepte la connexion WebSocket d'un joueur. Si 2 joueurs sont là, initialise le match selon le mode (hasard, draft, construit)
-    async def connect(self, websocket: WebSocket, match_id: str, mode: str):
+    # --- MODIFICATION ICI : Ajout du paramètre "color" et de la condition de refus ---
+    async def connect(self, websocket: WebSocket, match_id: str, mode: str, color: str):
         await websocket.accept()
+        
         if match_id not in self.active_connections:
             self.active_connections[match_id] = []
+            self.room_colors[match_id] = color # Le premier joueur réserve la salle avec sa couleur
+
+        elif self.room_colors.get(match_id) == color:
+            # Un joueur de la même équipe tente de rejoindre la salle ! On le bloque.
+            await websocket.send_json({"kind": "error", "message": "Un joueur de votre équipe est déjà en attente dans ce match !"})
+            await websocket.close()
+            return False # Indique que la connexion est refusée
+
         self.active_connections[match_id].append(websocket)
         self.player_presence.setdefault(match_id, {})
 
@@ -63,7 +73,12 @@ class ConnectionManager:
                     pool_ids = donnees["red_team_ids"] + donnees["blue_team_ids"]
                     
                     self.draft_states[match_id] = {
-                        "pool": pool_ids, "red_team": [], "blue_team": [], "turn": "red"
+                        "pool": pool_ids, 
+                        "red_team": [], 
+                        "blue_team": [], 
+                        "pick_order": ["red", "blue", "blue", "red", "red", "blue", "blue", "red", "red", "blue", "blue", "red"],
+                        "current_pick_index": 0,
+                        "turn": "red"
                     }
                     await self.broadcast_draft_state(match_id)
             if producer:
@@ -71,6 +86,8 @@ class ConnectionManager:
                     "service": "BattleEngine",
                     "message": f"Nouveau match lancé (ID: {match_id}, Mode: {mode})"
                 }).encode("utf-8"))
+        
+        return True # Indique que la connexion a réussi
                 
     # Retire un joueur déconnecté      
     def disconnect(self, websocket: WebSocket, match_id: str):
@@ -79,6 +96,7 @@ class ConnectionManager:
             if not self.active_connections[match_id]:
                 self.active_connections.pop(match_id, None)
                 self.player_presence.pop(match_id, None)
+                self.room_colors.pop(match_id, None) # --- MODIFICATION ICI : on libère la couleur si la salle est vide ---
                 
     # Envoie un message JSON à tous les joueurs 
     async def broadcast_to_match(self, message: dict, match_id: str):
@@ -122,12 +140,12 @@ class ConnectionManager:
         state["pool"].remove(pokemon_id)
         if player == "red":
             state["red_team"].append(pokemon_id)
-            state["turn"] = "blue"
         else:
             state["blue_team"].append(pokemon_id)
-            state["turn"] = "red"
             
-        if len(state["pool"]) == 0:
+        state["current_pick_index"] += 1
+            
+        if len(state["pool"]) == 0 or state["current_pick_index"] >= len(state["pick_order"]):
             msg = {
                 "kind": "match_start", "mode": "draft",
                 "message": "Draft terminée ! Que le combat commence !",
@@ -137,7 +155,9 @@ class ConnectionManager:
             await reset_chat_history(match_id)
             await self.broadcast_to_match(msg, match_id)
             del self.draft_states[match_id] 
+            
         else:
+            state["turn"] = state["pick_order"][state["current_pick_index"]]
             await self.broadcast_draft_state(match_id)
 
 
@@ -362,10 +382,13 @@ async def receive_player_action(action_data: PlayerAction):
     
     return {"status": "success", "message": "Action déposée dans Kafka !"}
 
-
-@app.websocket("/ws/battle/{match_id}/{mode}")
-async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: str):
-    await ws_manager.connect(websocket, match_id, mode)
+@app.websocket("/ws/battle/{match_id}/{mode}/{color}")
+async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: str, color: str):
+    
+    success = await ws_manager.connect(websocket, match_id, mode, color)
+    if not success:
+        return # La connexion a été rejetée, on ne rentre pas dans la boucle
+        
     try:
         while True:
             data = await websocket.receive_json()

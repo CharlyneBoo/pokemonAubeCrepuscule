@@ -58,7 +58,7 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(consume_history_loop())
     yield
 
-app = FastAPI(title="Duel Logic Service", lifespan=lifespan)
+app = FastAPI(title="Duel Logic Service", lifespan=lifespan,root_path="/api/duel")
 
 app.add_middleware(
     CORSMiddleware,

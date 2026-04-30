@@ -155,7 +155,7 @@ export class DuelComponent implements OnInit, OnDestroy {
   }
 
   connect_to_websocket() {
-    this.socket = new WebSocket(`${environment.api.battleWs}/ws/battle/${this.match_id}/${this.game_mode}`);
+    this.socket = new WebSocket(`${environment.api.battleWs}/ws/battle/${this.match_id}/${this.game_mode}/${this.team_color}`);
 
     this.socket.onopen = () => {
       this.socket?.send(JSON.stringify({
@@ -175,6 +175,11 @@ export class DuelComponent implements OnInit, OnDestroy {
 
     this.socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
+
+      if (data.kind === 'error') {
+        alert(data.message);
+        return;
+      }
 
       if (data.kind === 'opponent_info' && data.player !== this.team_color) {
         this.opponent_pseudo = data.pseudo;
@@ -564,5 +569,18 @@ export class DuelComponent implements OnInit, OnDestroy {
 
     return 'text-gray-800';
   }
-
+  getAvatarUrl(pseudo: string | undefined): string {
+    if (!pseudo) return '/avatar/gobou.jpeg';
+    
+    if (this.user && this.user.pseudo === pseudo && this.user.avatar_url) {
+        return this.user.avatar_url;
+    }
+    
+    const profile = this.user_profiles.find(u => u.pseudo === pseudo);
+    if (profile && profile.avatar_url) {
+        return profile.avatar_url;
+    }
+    
+    return '/avatar/gobou.jpeg'; 
+  }
 }

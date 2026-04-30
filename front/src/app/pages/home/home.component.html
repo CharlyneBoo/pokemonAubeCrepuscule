@@ -8,6 +8,7 @@
 
   <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
 
+    <!-- CARTE GAUCHE (Mode de jeu) -->
     <div
       class="p-6 rounded-[2.5rem] shadow-2xl relative w-full aspect-[4/3] flex flex-col justify-between border-b-8 border-r-8"
       [ngClass]="
@@ -94,6 +95,15 @@
             Pokedex
           </button>
         </div>
+        
+        <!-- LE BOUTON CGU EST MAINTENANT ICI : à l'intérieur de l'écran blanc -->
+        <div class="flex justify-center mt-3">
+          <button (click)="show_cgu_modal = true"
+            class="text-[11px] text-gray-400 hover:text-gray-600 underline font-bold uppercase tracking-wider transition-colors">
+            CGU & Contact
+          </button>
+        </div>
+
       </div>
 
       <div class="flex justify-start gap-6 px-8 pt-6 pb-2">
@@ -110,6 +120,7 @@
         </button>
       </div>
     </div>
+
 
     <div class="flex flex-col gap-6">
 
@@ -470,6 +481,70 @@
           Aucun événement enregistré pour le moment.
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE CGU ET CONTACT -->
+<div *ngIf="show_cgu_modal"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div
+    class="bg-white rounded-[2rem] p-8 w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl relative border-4 border-[#311b5e]">
+    <button (click)="show_cgu_modal = false"
+      class="absolute top-4 right-6 text-gray-400 hover:text-red-500 font-black text-2xl transition-colors">
+      &times;
+    </button>
+
+    <h2 class="text-3xl font-black text-[#311b5e] mb-6 text-center uppercase tracking-wider">
+      Mentions Légales
+    </h2>
+
+    <div class="flex-1 overflow-y-auto pr-2 space-y-6 custom-scrollbar text-gray-700">
+
+      <section>
+        <h3 class="text-xl font-bold text-[#db5151] mb-2 border-b-2 border-gray-100 pb-1">Conditions Générales
+          d'Utilisation</h3>
+        <div class="text-sm space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+          <p>
+            <strong class="text-gray-800"> Objet :</strong> Ce projet est une application de combat pokémon réalisé dans le cadre d'un projet d'étude. Il n'est en aucun cas affilié à Nintendo
+            ou The Pokémon Company.
+          </p>
+          <p>
+            <strong class="text-gray-800">Données :</strong> Vos mots de passe sont hashés et sécurisés. Les adresses
+            email ne sont utilisées que pour la connexion et ne seront jamais partagées à des tiers.
+          </p>
+          <p>
+            <strong class="text-gray-800">Propriété intellectuelle :</strong> Les images, noms et concepts liés à
+            Pokémon appartiennent à leurs ayants droit respectifs.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h3 class="text-xl font-bold text-[#6a4cef] mb-2 border-b-2 border-gray-100 pb-1">Nous contacter</h3>
+        <p class="text-sm mb-3">Pour toute question, demande de support ou signalement de bug, n'hésitez pas à nous
+          contacter via les adresses mail ci-dessous :</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2">
+            <span class="font-bold text-blue-800">Cuyala Antonin</span>
+            <span class="text-blue-600 hover:underline">cuyalaanto@cy-tech.fr</span>
+          </div>
+          <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2">
+            <span class="font-bold text-blue-800">Wargnier-Potier Charlyne</span>
+            <span class="text-blue-600 hover:underline">wargnierpo@cy-tech.fr</span>
+          </div>
+          <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2">
+            <span class="font-bold text-blue-800">Radin Matthias</span>
+            <span class="text-blue-600 hover:underline">radinmatth@cy-tech.fr</span>
+          </div>
+          <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-center gap-2">
+            <span class="font-bold text-blue-800">Nichele Pierre</span>
+            <span class="text-blue-600 hover:underline">nichelepie@cy-tech.fr</span>
+          </div>
+        </div>
+      </section>
+
     </div>
   </div>
 </div>

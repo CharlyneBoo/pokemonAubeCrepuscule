@@ -87,15 +87,12 @@ echo " Attente du démarrage des services (cela peut prendre 1 à 3 minutes)..."
 echo "======================================================="
 sleep 5
 
-echo "Vérification des tâches d'initialisation (Jobs)..."
-kubectl wait --for=condition=complete job --all -n pokemon-aube-crepuscule --timeout=120s
+echo "Pour vérifier l'état des pods saisissez cette commande :"
+echo "--> kubectl get pods -n pokemon-aube-crepuscule"
 
-echo "Vérification des microservices..."
-kubectl wait --for=condition=Ready pod -l '!job-name' -n pokemon-aube-crepuscule --timeout=300s
-
-echo "Tous les pods sont 100% opérationnels !"
+echo "Le job 'kafka-init' doit être Complete et "
+echo "Tous les autres pods doivent être en état de Running"
 echo "======================================================="
 echo "       ☀️ INSTALLATION TERMINÉE AVEC SUCCÈS ☀️"
 echo "======================================================="
-echo "Pour voir l'état des services : kubectl get pods -n pokemon-aube-crepuscule -w"
-echo "Sinon  : http://$DOMAIN"
+echo "Accès au projet  : http://$DOMAIN"

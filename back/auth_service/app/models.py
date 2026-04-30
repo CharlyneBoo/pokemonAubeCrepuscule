@@ -1,4 +1,4 @@
-from sqlalchemy import CHAR, Boolean, Column, DateTime, String, Integer, JSON, TIMESTAMP, ForeignKey, func
+from sqlalchemy import CHAR, Boolean, CheckConstraint, Column, DateTime, String, Integer, JSON, TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import relationship
 import uuid
 from .database import Base
@@ -19,7 +19,9 @@ class User(Base):
     created_at = Column(DateTime, server_default=func.now())
     pokemon_team = relationship("PokemonTeam", back_populates="owner")
     is_admin = Column(Boolean, default=False) # Tous les nouveaux comptes sont des simples users
-    
+    __table_args__ = (
+        CheckConstraint('aura >= 0', name='check_aura_positive'),
+    )
 class PokemonTeam(Base):
     __tablename__ = "pokemon_teams"
     

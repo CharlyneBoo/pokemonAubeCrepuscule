@@ -81,7 +81,7 @@ async def lifespan(app: FastAPI):
         await producer.stop()
 
 
-app = FastAPI(title="Auth Service", lifespan=lifespan)
+app = FastAPI(title="Auth Service", lifespan=lifespan,root_path="/api/auth")
 
 app.add_middleware(
     CORSMiddleware,

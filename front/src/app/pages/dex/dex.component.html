@@ -1,3 +1,13 @@
+<div class="max-w-7xl mx-auto pt-6 px-4 md:px-0 flex justify-between items-start">
+  <button (click)="naviguer('/home')" 
+          class="flex items-center gap-2 bg-white/80 hover:bg-white text-[#311b5e] font-bold py-2 px-4 rounded-xl shadow-md transition-all hover:shadow-lg active:scale-95 group">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    Retour
+  </button>
+</div>
+
 <div class="max-w-7xl mx-auto flex justify-end">
   <img (click)="naviguer('/home')"
     class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity cursor-pointer" src="/titre.png"
@@ -10,7 +20,7 @@
         user.team_color === 'red' ? 'from-[#db5151] to-[#522761]' : 'from-[#90a5ff] to-[#522761]'
       ">
       <div class="flex items-center gap-3 pl-2">
-        <div class="w-8 h-8 bg-white rounded-full relative overflow-hidden flex items-center justify-center">
+        <div (click)="resetRecherche()" class="w-8 h-8 bg-white rounded-full relative overflow-hidden flex items-center justify-center">
           <img class="deco-img w-32 md:w-48 h-auto object-contain opacity-90 hover:opacity-100 transition-opacity"
             src="favicon.ico" alt="Logo" />
         </div>

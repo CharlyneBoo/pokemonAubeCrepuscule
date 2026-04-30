@@ -143,4 +143,13 @@ export class DexComponent implements OnInit {
   naviguer(route: string) {
     this.router.navigate([route]);
   }
+
+  resetRecherche() {
+    this.searchNom = '';
+    this.searchId = '';
+    this.searchType1 = '';
+    this.searchType2 = '';
+    
+    this.lancerRecherche(true);
+  }
 }

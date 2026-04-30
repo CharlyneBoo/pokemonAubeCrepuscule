@@ -54,7 +54,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   home_chat_socket: WebSocket | null = null;
   user_profiles: UserOut[] = [];
   selected_chat_profile: { pseudo: string; avatar_url?: string; aura?: number } | null = null;
-
+  show_cgu_modal: boolean = false;
+  
   constructor(
     private router: Router,
     private auth: Auth,

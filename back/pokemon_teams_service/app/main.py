@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
     if producer:
         await producer.stop()
 
-app = FastAPI(title="Pokemon Service - Pokemon Teams", lifespan=lifespan)
+app = FastAPI(title="Pokemon Service - Pokemon Teams", lifespan=lifespan,root_path="/api/pokemonteams")
 
 app.add_middleware(
     CORSMiddleware,

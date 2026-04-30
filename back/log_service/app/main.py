@@ -71,11 +71,26 @@ async def consume_system_logs():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Lancement du consumer en tâche de fond
+    global consumer
+    
+    consumer = AIOKafkaConsumer(
+        "system.logs",
+        bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
+        group_id="log-service-group",
+        auto_offset_reset="latest"
+    )
+    
+    await consumer.start()
+    
     asyncio.create_task(consume_system_logs())
+    
     yield
+    
+    if consumer:
+        await consumer.stop()
 
-app = FastAPI(title="Log Service", lifespan=lifespan)
+
+app = FastAPI(title="Log Service", lifespan=lifespan,root_path="/api/log")
 
 app.add_middleware(
     CORSMiddleware,

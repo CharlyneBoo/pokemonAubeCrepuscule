@@ -13,7 +13,7 @@ BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 JOURNAL_TOPIC = "chat.global"
 CHAT_CONSUMER_GROUP = "chat-service"
 
-app = FastAPI(title="Chat Service")
+app = FastAPI(title="Chat Service",root_path="/api/chat")
 
 
 class ConnectionManager:

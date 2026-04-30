@@ -5,7 +5,7 @@ import asyncio
 from typing import List, Optional
 from app.models import PokemonInfo
 
-app = FastAPI(title="Pokemon Service - Pokedex")
+app = FastAPI(title="Pokemon Service - Pokedex",root_path="/api/pokemon")
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: log-service
+  name: log-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: log-service
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+        kompose.version: 1.38.0 (a8f5d1cbd)
+      labels:
+        io.kompose.service: log-service
+    spec:
+      containers:
+        - image: back-log_service:latest
+          imagePullPolicy: Never
+          name: log-service
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /code/app
+              name: log-service-cm0
+      restartPolicy: Always
+      volumes:
+        - configMap:
+            name: log-service-cm0
+          name: log-service-cm0

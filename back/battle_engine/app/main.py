@@ -44,7 +44,7 @@ class ConnectionManager:
         if len(self.active_connections[match_id]) == 2:
             if mode == "hasard":
                 async with httpx.AsyncClient() as client:
-                    reponse = await client.get("http://duel-service:8000/generate-random-teams")
+                    reponse = await client.get("http://duel-service:8004/generate-random-teams")
                     donnees = reponse.json()
                     message_depart = {
                         "kind": "match_start", "mode": "hasard",
@@ -60,7 +60,7 @@ class ConnectionManager:
                     }).encode("utf-8"))
             elif mode == "draft":
                 async with httpx.AsyncClient() as client:
-                    reponse = await client.get("http://duel-service:8000/generate-random-teams")
+                    reponse = await client.get("http://duel-service:8004/generate-random-teams")
                     donnees = reponse.json()
                     pool_ids = donnees["red_team_ids"] + donnees["blue_team_ids"]
                     
@@ -264,7 +264,7 @@ async def consume_commands_loop():
                 }
                 async with httpx.AsyncClient() as client:
                     try:
-                        reponse = await client.post("http://duel-service:8000/resolve", json=duel_payload)
+                        reponse = await client.post("http://duel-service:8004/resolve", json=duel_payload)
                         resultat_duel = reponse.json()
                     except Exception as e:
                         print("Erreur de connexion au Service Duel:", e)

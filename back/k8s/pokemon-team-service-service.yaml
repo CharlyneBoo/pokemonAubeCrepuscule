@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.38.0 (a8f5d1cbd)
+  labels:
+    io.kompose.service: pokemon-team-service
+  name: pokemon-team-service
+spec:
+  ports:
+    - name: "8003"
+      port: 8003
+      targetPort: 8000
+  selector:
+    io.kompose.service: pokemon-team-service

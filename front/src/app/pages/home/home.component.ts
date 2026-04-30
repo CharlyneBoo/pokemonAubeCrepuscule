@@ -6,6 +6,7 @@ import { Auth } from '../../services/auth';
 import { PokemonTeamService } from '../../services/pokemon_team.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http'; 
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-home',
@@ -174,7 +175,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     
     try {
       const response: any = await firstValueFrom(
-        this.http.get('http://localhost:8000/users/me/history', { headers })
+        this.http.get(`${environment.api.auth}/users/me/history`, { headers })
       );
       this.match_history = response;
     } catch (error) {
@@ -196,7 +197,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     
     try {
       const response: any = await firstValueFrom(
-        this.http.get('http://localhost:8006/admin/logs', { headers })
+        this.http.get(`${environment.api.log}/admin/logs`, { headers })
       );
       this.system_logs = response;
     } catch (error) {
@@ -220,7 +221,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) return;
 
     this.home_chat_socket?.close();
-    this.home_chat_socket = new WebSocket(`ws://localhost:8007/ws/chat/${this.HOME_CHAT_ROOM}`);
+    this.home_chat_socket = new WebSocket(`${environment.api.chatWs}/ws/chat/${this.HOME_CHAT_ROOM}`);
 
     this.home_chat_socket.onmessage = (event) => {
       const data = JSON.parse(event.data);

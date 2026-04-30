@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 // L'interface sert juste de "moule" pour que TypeScript connaisse la forme d'une équipe
 export interface PokemonTeam {
@@ -14,7 +15,7 @@ export interface PokemonTeam {
 @Injectable({ providedIn: 'root' })
 export class PokemonTeamService {
   
-  private apiUrl = 'http://localhost:8003/pokemonteams'; 
+  private apiUrl = `${environment.api.pokemon_teams}/pokemonteams`;
 
   constructor(private http: HttpClient) {}
 

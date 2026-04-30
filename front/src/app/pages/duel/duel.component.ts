@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth'; 
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+
 
 @Component({
   selector: 'app-duel',
@@ -130,11 +132,11 @@ export class DuelComponent implements OnInit, OnDestroy {
       pokemon_actif: { name: pokemon_combattant.name, types: pokemon_combattant.types }
     };
     
-    this.http.post('http://localhost:8005/battle/action', payload).subscribe();
+    this.http.post(`${environment.api.battle_engine}/battle/action`, payload).subscribe();
   }
 
   connect_to_websocket() {
-    this.socket = new WebSocket(`ws://localhost:8005/ws/battle/${this.match_id}/${this.game_mode}`);
+    this.socket = new WebSocket(`${environment.api.battleWs}/ws/battle/${this.match_id}/${this.game_mode}`);
 
     this.socket.onopen = () => {
       this.socket?.send(JSON.stringify({
@@ -270,7 +272,7 @@ export class DuelComponent implements OnInit, OnDestroy {
   }
 
   connect_to_chat_socket() {
-    this.chat_socket = new WebSocket(`ws://localhost:8007/ws/chat/${this.match_id}`);
+    this.chat_socket = new WebSocket(`${environment.api.chatWs}/ws/chat/${this.match_id}`);
 
     this.chat_socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -425,7 +427,7 @@ export class DuelComponent implements OnInit, OnDestroy {
   }
 
   update_aura(result: 'win' | 'loss') {
-    const url = 'http://localhost:8000/users/me/aura';
+    const url = `${environment.api.auth}/users/me/aura`;
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
@@ -439,7 +441,7 @@ export class DuelComponent implements OnInit, OnDestroy {
 
   async fetch_pokemon_by_id(id: number) {
     try {
-      const data: any = await firstValueFrom(this.http.get(`http://localhost:8002/dex/${id}`));
+      const data: any = await firstValueFrom(this.http.get(`${environment.api.pokemon}/dex/${id}`));
       return { id: data.id, name: data.nom, types: data.types, icon_url: data.image, sprite_url: data.image, is_ko: false, is_revealed: false };
     } catch (e) { return null; }
   }

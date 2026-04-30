@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-init
+spec:
+  template:
+    spec:
+      containers:
+      - name: kafka-init
+        image: confluentinc/cp-kafka:7.6.1
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "En attente de Kafka..."
+          while ! kafka-broker-api-versions --bootstrap-server kafka-svc:9092 >/dev/null 2>&1; do sleep 2; done;
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic chat.global --partitions 1 --replication-factor 1
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic chat.red --partitions 1 --replication-factor 1
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic chat.blue --partitions 1 --replication-factor 1
+          kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic battle.commands --partitions 1 --replication-factor 1
+          echo "Topics prêts."
+      restartPolicy: OnFailure

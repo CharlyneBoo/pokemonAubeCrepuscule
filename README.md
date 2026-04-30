@@ -126,7 +126,7 @@ La page Mes Equipes est la page sur laquelle l'utilisateur peut : Créer, Suppri
 
 En cliquant sur **Modifier**, l'équipe passe en mode édition et l'utilisateur peut enlever un pokémon en cliquant dessus ou en rajouter un en cliquant dans un espace libre et en rentrant l'ID du pokémon. Pour sauvegarder et quitter le mode édition, il suffit d'appuyer sur **Save**.
 
-<img src="imagereadmes/Pasted%20image%2020260430133127.png" width="800">
+<img src="imagereadmes/Pastedimage2020260430133127.png" width="800">
 <img src="imagereadmes/Pasted%20image%2020260430133253.png" width="800">
 
 Le bouton **Delete** supprime l'équipe et le bouton **Complete** la complète SI elle n'est pas pleine.

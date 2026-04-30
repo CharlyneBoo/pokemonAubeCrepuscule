@@ -47,16 +47,22 @@
         </div>
       </div>
 
-      <ng-container *ngIf="current_phase === 'battle'">
+     <ng-container *ngIf="current_phase === 'battle'">
+        
         <div class="active-pokemon flex flex-col justify-center items-center z-10 relative h-full flex-1">
-          <div *ngIf="active_blue" class="relative">
-            <img [src]="active_blue.sprite_url"
-              class="w-48 h-48 object-contain drop-shadow-2xl relative z-10 scale-x-[-1]" />
-            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0">
+          <div *ngIf="active_blue" class="flex flex-col items-center">
+            
+            <div class="relative pb-2">
+              <img [src]="active_blue.sprite_url"
+                class="w-48 h-48 object-contain drop-shadow-2xl relative z-10 scale-x-[-1]" />
+              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0">
+              </div>
             </div>
-            <div class="bg-white/90 text-blue-800 border-2 border-blue-500 font-bold text-center mt-2 rounded px-2">
+
+            <div class="bg-white/90 text-blue-800 border-2 border-blue-500 font-bold text-center mt-3 rounded px-4 py-1 z-20 shadow-sm">
               {{ active_blue.name }}
             </div>
+
           </div>
           <div *ngIf="!active_blue"
             class="text-white font-black text-xl bg-black/50 p-4 rounded-xl text-center border-2 border-dashed border-white uppercase backdrop-blur-sm">
@@ -67,13 +73,18 @@
         <div class="vs text-6xl font-black italic text-white drop-shadow-lg z-10 mx-4">VS</div>
 
         <div class="active-pokemon flex flex-col justify-center items-center z-10 relative h-full flex-1">
-          <div *ngIf="active_red" class="relative">
-            <img [src]="active_red.sprite_url" class="w-48 h-48 object-contain drop-shadow-2xl relative z-10" />
-            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0">
+          <div *ngIf="active_red" class="flex flex-col items-center">
+            
+            <div class="relative pb-2">
+              <img [src]="active_red.sprite_url" class="w-48 h-48 object-contain drop-shadow-2xl relative z-10" />
+              <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-8 bg-black/30 rounded-full blur-sm z-0">
+              </div>
             </div>
-            <div class="bg-white/90 text-red-800 border-2 border-red-500 font-bold text-center mt-2 rounded px-2">
+
+            <div class="bg-white/90 text-red-800 border-2 border-red-500 font-bold text-center mt-3 rounded px-4 py-1 z-20 shadow-sm">
               {{ active_red.name }}
             </div>
+
           </div>
           <div *ngIf="!active_red"
             class="text-white font-black text-xl bg-black/50 p-4 rounded-xl text-center border-2 border-dashed border-white uppercase backdrop-blur-sm">

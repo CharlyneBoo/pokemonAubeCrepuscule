@@ -48,11 +48,13 @@ http://pokemon.aube.crepuscule
 - Cliquer sur le pseudo d'un joueur, dans le chat ou dans un duel ouvre une petite page avec avatar, pseudo et aura (points).
 <img src="imagesreadme/Pasted%20image%2020260430162819.png" width="300">
 
+- Pour accéder au /doc de chaque service, rendez-vous sur : http://pokemon.aube.crepuscule/api/nom_du_service/docs . Vous pouvez retrouver tous les noms et les liens dans le rapport.
+
+
 Pour supprimer le projet, fermer les db etc, faites simplement : 
 ```bash
 minikube delete
 ```
-- Pour accéder au /doc de chaque service, rendez-vous sur : http://pokemon.aube.crepuscule/api/nom_du_service/docs . Vous pouvez retrouver tous les noms et les liens dans le rapport.
 
 # Login / Register 
 

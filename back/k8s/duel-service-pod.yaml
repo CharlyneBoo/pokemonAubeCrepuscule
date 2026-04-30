@@ -12,6 +12,8 @@ spec:
     - env:
         - name: PYTHONUNBUFFERED
           value: "1"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-svc:9092"
       image: back-duel-service:latest
       imagePullPolicy: Never
       name: duel-service

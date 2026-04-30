@@ -33,26 +33,23 @@ class ConnectionManager:
         
         # Pseudo des players
         self.player_pseudos: dict[str, dict] = {} 
-        self.room_colors: dict[str, str] = {} # --- MODIFICATION ICI ---
+        self.room_colors: dict[str, str] = {} 
 
-    # --- MODIFICATION ICI : Ajout du paramètre "color" et de la condition de refus ---
     async def connect(self, websocket: WebSocket, match_id: str, mode: str, color: str):
         await websocket.accept()
         
         if match_id not in self.active_connections:
             self.active_connections[match_id] = []
-            self.room_colors[match_id] = color # Le premier joueur réserve la salle avec sa couleur
+            self.room_colors[match_id] = color 
 
         elif self.room_colors.get(match_id) == color:
-            # Un joueur de la même équipe tente de rejoindre la salle ! On le bloque.
             await websocket.send_json({"kind": "error", "message": "Un joueur de votre équipe est déjà en attente dans ce match !"})
             await websocket.close()
-            return False # Indique que la connexion est refusée
+            return False 
 
         self.active_connections[match_id].append(websocket)
         self.player_presence.setdefault(match_id, {})
 
-        # Dès que les 2 joueurs sont là, on peut enchainer sur le mode
         if len(self.active_connections[match_id]) == 2:
             if mode == "hasard":
                 async with httpx.AsyncClient() as client:
@@ -87,18 +84,16 @@ class ConnectionManager:
                     "message": f"Nouveau match lancé (ID: {match_id}, Mode: {mode})"
                 }).encode("utf-8"))
         
-        return True # Indique que la connexion a réussi
+        return True 
                 
-    # Retire un joueur déconnecté      
     def disconnect(self, websocket: WebSocket, match_id: str):
         if match_id in self.active_connections:
             self.active_connections[match_id].remove(websocket)
             if not self.active_connections[match_id]:
                 self.active_connections.pop(match_id, None)
                 self.player_presence.pop(match_id, None)
-                self.room_colors.pop(match_id, None) # --- MODIFICATION ICI : on libère la couleur si la salle est vide ---
+                self.room_colors.pop(match_id, None) 
                 
-    # Envoie un message JSON à tous les joueurs 
     async def broadcast_to_match(self, message: dict, match_id: str):
         if match_id in self.active_connections:
             for connection in self.active_connections[match_id]:
@@ -120,7 +115,6 @@ class ConnectionManager:
                 match_id,
             )
 
-    # Envoie l'état actuel de la draft aux deux joueurs.
     async def broadcast_draft_state(self, match_id: str):
         state = self.draft_states[match_id]
         msg = {
@@ -130,7 +124,6 @@ class ConnectionManager:
         }
         await self.broadcast_to_match(msg, match_id)
 
-    # Gère quand un joueur clique sur un Pokémon pendant la draft
     async def draft_pick(self, match_id: str, player: str, pokemon_id: int):
         if match_id not in self.draft_states: return
         state = self.draft_states[match_id]
@@ -161,15 +154,12 @@ class ConnectionManager:
             await self.broadcast_draft_state(match_id)
 
 
-    # Gère quand les joueurs rejoignent l'arène avec leurs équipes persos
     async def process_join_construit(self, match_id: str, player: str, team_ids: list[int]):
         if match_id not in self.construit_teams:
             self.construit_teams[match_id] = {}
         
-        # On stocke l'équipe du joueur
         self.construit_teams[match_id][player] = team_ids
 
-        # Si les deux joueurs ont envoyé leur équipe, on lance le match
         if "red" in self.construit_teams[match_id] and "blue" in self.construit_teams[match_id]:
             msg = {
                 "kind": "match_start", 
@@ -209,7 +199,6 @@ match_logs_memory: dict[str, list[dict]] = {}
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
-# Formate le résultat d'un tour, l'envoie dans Kafka et l'affiche aux joueurs via WebSocket.
 async def publish_turn_result(match_id: str, turn: int, red_choice: dict, blue_choice: dict, resultat_duel: dict):
     global producer
     assert producer is not None
@@ -271,8 +260,15 @@ async def consume_commands_loop():
         enable_auto_commit=True,
     )
 
-    await consumer.start()
-    print(f"[BattleEngine] consumer démarré sur {COMMANDS_TOPIC}", flush=True)
+    connected = False
+    while not connected:
+        try:
+            await consumer.start()
+            connected = True
+            print(f"[BattleEngine] consumer démarré sur {COMMANDS_TOPIC}", flush=True)
+        except Exception as e:
+            print(f"[BattleEngine] Consumer attend Kafka... ({e})", flush=True)
+            await asyncio.sleep(5)
 
     try:
         async for msg in consumer:
@@ -323,8 +319,7 @@ async def consume_commands_loop():
 
                 match_logs_memory.setdefault(match_id, [])
                 match_logs_memory[match_id].append({"tour": int(turn), "message": tour_msg})
-                # -------------------------------------------------
-
+                
                 await publish_turn_result(match_id, int(turn), red_choice, blue_choice, resultat_duel)
 
                 del pending[key]
@@ -332,12 +327,7 @@ async def consume_commands_loop():
     finally:
         await consumer.stop()
         
-
-# Compile toutes les données de fin de partie et les envoie à Kafka pour être sauvegardées en BDD par le Duel Service.
 async def save_match_to_history(match_id, red_id, blue_id, winner, mode, logs):
-    """
-    Envoie l'archive complète du match dans Kafka pour qu'elle soit sauvegardée
-    """
     if producer:
         unique_uuid = str(uuid.uuid4())
         
@@ -387,7 +377,7 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
     
     success = await ws_manager.connect(websocket, match_id, mode, color)
     if not success:
-        return # La connexion a été rejetée, on ne rentre pas dans la boucle
+        return 
         
     try:
         while True:
@@ -422,7 +412,6 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
                 else:
                     winner_pseudo = "Égalité"
 
-                # On récupère et vide les logs accumulés pendant la partie
                 logs_de_la_partie = match_logs_memory.pop(match_id, [])
 
                 await save_match_to_history(
@@ -438,7 +427,6 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
                 loser_color = data.get("player")
                 winner_color = "blue" if loser_color == "red" else "red"
                 
-                # On prévient les joueurs
                 await ws_manager.broadcast_to_match({
                     "kind": "forfeit_notice",
                     "loser": loser_color,
@@ -451,7 +439,6 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
                 blue_pseudo = pseudos.get("blue", "Joueur Bleu")
                 winner_pseudo = red_pseudo if winner_color == "red" else blue_pseudo
                 
-                # On récupère et vide les logs, et on ajoute un message d'abandon
                 logs_de_la_partie = match_logs_memory.pop(match_id, [])
                 logs_de_la_partie.append({"tour": "Fin", "message": f"🚩 Le joueur {loser_color} a abandonné."})
                 
@@ -477,8 +464,17 @@ async def websocket_battle_endpoint(websocket: WebSocket, match_id: str, mode: s
 async def startup():
     global producer
     producer = AIOKafkaProducer(bootstrap_servers=BOOTSTRAP)
-    await producer.start()
-    print("[BattleEngine] producer démarré", flush=True)
+    
+    connected = False
+    while not connected:
+        try:
+            await producer.start()
+            connected = True
+            print("[BattleEngine] producer connecté à Kafka !", flush=True)
+        except Exception as e:
+            print(f"[BattleEngine] Producer attend Kafka... ({e})", flush=True)
+            await asyncio.sleep(5)
+            
     asyncio.create_task(consume_commands_loop())
 
 @app.on_event("shutdown")

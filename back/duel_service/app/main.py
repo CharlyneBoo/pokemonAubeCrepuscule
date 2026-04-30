@@ -23,8 +23,17 @@ async def consume_history_loop():
         group_id="duel-history-saver",
         auto_offset_reset="latest"
     )
-    await consumer.start()
     
+    connected = False
+    while not connected:
+        try:
+            print(f"Tentative de connexion à Kafka sur {KAFKA_BOOTSTRAP_SERVERS}...")
+            await consumer.start()
+            connected = True
+            print("Connexion à Kafka réussie !")
+        except Exception as e:
+            print(f"Kafka n'est pas encore prêt, on réessaie dans 5s... ({e})", flush=True)
+            await asyncio.sleep(5)            
     try:
         async for msg in consumer:
             data = json.loads(msg.value.decode("utf-8"))
@@ -44,7 +53,7 @@ async def consume_history_loop():
                 finally:
                     db.close()
     except Exception as e:
-        print(f"Erreur Consumer Historique (Duel Service) : {e}")
+        print(f"Erreur Consumer Historique (Duel Service) : {e}", flush=True)
     finally:
         await consumer.stop()
 

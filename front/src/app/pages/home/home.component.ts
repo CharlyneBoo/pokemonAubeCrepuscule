@@ -56,7 +56,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   user_profiles: UserOut[] = [];
   selected_chat_profile: { pseudo: string; avatar_url?: string; aura?: number } | null = null;
   show_cgu_modal: boolean = false;
-  
+
   constructor(
     private router: Router,
     private auth: Auth,
@@ -190,13 +190,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   async ouvrir_historique() {
     this.show_history_modal = true;
     this.is_loading_history = true;
-
+    const pseudo = this.user?.pseudo;
     const token = localStorage.getItem('token') || localStorage.getItem('access_token');
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
     try {
       const response: any = await firstValueFrom(
-        this.http.get(`${environment.api.auth}/users/me/history`, { headers })
+        this.http.get(`${environment.api.duel}/history/${pseudo}`, { headers })
       );
       this.match_history = response;
     } catch (error) {

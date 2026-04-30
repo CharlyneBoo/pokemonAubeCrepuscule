@@ -114,7 +114,7 @@ async def resolve(request: BattleRequest):
 
 @app.get("/generate-random-teams")
 def generate_random_teams():
-    ids_tires = random.sample(range(1, 1000), 12)
+    ids_tires = random.sample(range(1, 1025), 12)
     return {
         "red_team_ids": ids_tires[0:6], "blue_team_ids": ids_tires[6:12],
         "red_active_index": random.randint(0, 5), "blue_active_index": random.randint(0, 5)

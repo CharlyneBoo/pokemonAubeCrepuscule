@@ -146,9 +146,9 @@ async def complete(equipe_id: int, db: Session = Depends(get_db)):
         return {"message": "L'équipe est déjà pleine !"}
         
     for i in range(places_libres):
-        random_pokemon = random.randint(1, 1000)
+        random_pokemon = random.randint(1, 1025)
         while random_pokemon in current_pokemons:
-            random_pokemon = random.randint(1, 1000)
+            random_pokemon = random.randint(1, 1025)
         current_pokemons.append(random_pokemon)
         
     update_team_slots(db_team, current_pokemons)

@@ -102,6 +102,7 @@ async def fetch_pokemon_data(pokemon_id: str) -> dict:
 @app.get("/dex/search", response_model=List[PokemonInfo])
 async def search_pokemon( nom: str = None, pokemon_id: int = None, type1: str = None, type2: str = None,  offset: int = 0, limit: int = 100):
     
+    # Recherche par ID exacte
     if pokemon_id != None:
         try:
             pokemon = await fetch_pokemon_data(str(pokemon_id))
@@ -109,72 +110,77 @@ async def search_pokemon( nom: str = None, pokemon_id: int = None, type1: str = 
         except HTTPException:
             return []
         
-    # CAS 1 : L'utilisateur n'a rien tapé
+    # CAS 1 : L'utilisateur n'a absolument rien tapé
     if nom == None and type1 == None and type2 == None:
         waiting = []
         for i in range(offset + 1, offset + limit + 1):
             waiting.append(fetch_pokemon_data(str(i)))
         resultats = await asyncio.gather(*waiting, return_exceptions=True)
-        liste_finale = []
-        for r in resultats:
-            if type(r) is dict: 
-                liste_finale.append(r)
+        liste_finale = [r for r in resultats if type(r) is dict]
         return liste_finale
 
-   # CAS 2 : Recherche avec filtres
+    # CAS 2 : Recherche avec filtres (Types ou Noms)
     mon_client = httpx.AsyncClient()
     pokemons_trouves = []
-    
-    if type1 != None:
-        reponse = await mon_client.get(f"{BASE_URL}/type/{type1.lower()}")
-        if reponse.status_code == 200:
-            data = reponse.json()
-            for p in data["pokemon"]:
-                url = p["pokemon"]["url"]
-                morceaux = url.split("/")
-                id_du_pokemon = int(morceaux[-2])
-                pokemons_trouves.append({"id": id_du_pokemon, "name": p["pokemon"]["name"]})
 
-    # Si y'a pas de type, on est obligé de tout télécharger
-    if type1 == None and type2 == None:
+    # Fonction locale pour récupérer une liste de Pokémon par type (en anglais direct)
+    async def get_by_type(t: str):
+        type_anglais = t.lower()
+        reponse = await mon_client.get(f"{BASE_URL}/type/{type_anglais}")
+        res = []
+        if reponse.status_code == 200:
+            for p in reponse.json()["pokemon"]:
+                id_pkmn = int(p["pokemon"]["url"].split("/")[-2])
+                res.append({"id": id_pkmn, "name": p["pokemon"]["name"]})
+        return res
+
+    # GESTION DES TYPES AVEC INTERSECTION (ET)
+    if type1 != None or type2 != None:
+        list_t1 = []
+        list_t2 = []
+
+        # On lance les requêtes en parallèle si on a deux types
+        taches = []
+        if type1: taches.append(get_by_type(type1))
+        if type2: taches.append(get_by_type(type2))
+
+        resultats_types = await asyncio.gather(*taches)
+
+        if type1 and type2:
+            list_t1 = resultats_types[0]
+            list_t2 = resultats_types[1]
+            # INTERSECTION : On garde uniquement les IDs qui sont dans la liste 1 ET dans la liste 2
+            ids_t2 = {p["id"] for p in list_t2}
+            pokemons_trouves = [p for p in list_t1 if p["id"] in ids_t2]
+        else:
+            # Un seul type a été renseigné
+            pokemons_trouves = resultats_types[0]
+
+    else:
+        # Aucun type renseigné, on récupère le grand annuaire pour ensuite filtrer par nom
         reponse = await mon_client.get(f"{BASE_URL}/pokemon?limit=1500")
-        data = reponse.json()
-        for p in data["results"]:
-            url = p["url"]
-            morceaux = url.split("/")
-            id_du_pokemon = int(morceaux[-2])
-            pokemons_trouves.append({"id": id_du_pokemon, "name": p["name"]})
+        if reponse.status_code == 200:
+            for p in reponse.json()["results"]:
+                id_pkmn = int(p["url"].split("/")[-2])
+                pokemons_trouves.append({"id": id_pkmn, "name": p["name"]})
 
     await mon_client.aclose()
 
-    # Si le mec a tapé un nom
+    # FILTRE PAR NOM
     if nom != None:
-        liste_tempo = []
         mot = nom.lower()
-        for p in pokemons_trouves:
-            if mot in p["name"]:
-                liste_tempo.append(p)
-        pokemons_trouves = liste_tempo
+        pokemons_trouves = [p for p in pokemons_trouves if mot in p["name"]]
 
-    def tri_par_id(pokemon):
-        return pokemon["id"]
-        
-    pokemons_trouves.sort(key=tri_par_id)
+    # Tri par ID pour garder l'ordre officiel
+    pokemons_trouves.sort(key=lambda x: x["id"])
     
-    # On coupe la liste pour la pagination
+    # PAGINATION : On coupe la liste pour ne charger que ce qu'on demande
     pokemons_a_chercher = pokemons_trouves[offset : offset + limit]
     
-    waiting = []
-    for p in pokemons_a_chercher:
-        waiting.append(fetch_pokemon_data(p["name"]))
-        
+    waiting = [fetch_pokemon_data(p["name"]) for p in pokemons_a_chercher]
     resultats = await asyncio.gather(*waiting, return_exceptions=True)
     
-    liste_finale = []
-    for r in resultats:
-        if type(r) is dict:
-            liste_finale.append(r)
-            
+    liste_finale = [r for r in resultats if type(r) is dict]
     return liste_finale
 
 @app.get("/dex/{id}", response_model=PokemonInfo)
